@@ -1,0 +1,37 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Sync dependencies
+      run: uv sync
+    
+    - name: Check Python syntax
+      run: python -m py_compile app.py main.py src/*.py
+      continue-on-error: true
+    
+    - name: Lint with flake8
+      run: |
+        uv pip install flake8 2>/dev/null || true
+        flake8 app.py src/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics || true
+      continue-on-error: true

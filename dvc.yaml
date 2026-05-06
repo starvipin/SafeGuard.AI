@@ -1,0 +1,31 @@
+stages:
+  data_ingestion:
+    cmd: python src/stage_01_get_data.py
+    deps:
+      - src/stage_01_get_data.py
+      - params.yaml
+      - sample_train.parquet
+    outs:
+      - data/raw_data/dataset.parquet
+
+  training:
+    cmd: python src/stage_02_train.py
+    deps:
+      - src/stage_02_train.py
+      - data/raw_data/dataset.parquet
+    params:
+      - train.learning_rate
+      - train.max_depth
+      - train.n_estimators
+    outs:
+      - models/model.pkl
+
+  evaluation:
+    cmd: python src/stage_03_evaluate.py
+    deps:
+      - src/stage_03_evaluate.py
+      - models/model.pkl
+      - data/raw_data/dataset.parquet
+    metrics:
+      - metrics.json:
+          cache: false

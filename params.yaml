@@ -1,0 +1,11 @@
+data_source:
+  local_path: data/raw_data/fraud_dataset.csv
+  raw_data_dir: data/raw_data
+  dataset_name: fraud_dataset.csv
+
+train:
+  model_name: distilbert-base-uncased
+  batch_size: 4
+  epochs: 3
+  learning_rate: 5e-5
+  save_steps: 500

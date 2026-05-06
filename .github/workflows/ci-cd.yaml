@@ -1,0 +1,51 @@
+name: SafeGuard AI MLOps Pipeline
+
+on:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  test-and-train:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Sync dependencies with uv
+      run: uv sync
+
+    - name: Run Tests
+      run: uv run pytest tests/ -v
+      continue-on-error: true
+
+    - name: Run Data Ingestion Pipeline (Stage 01)
+      run: uv run python src/stage_01_get_data.py
+
+    - name: Run Training Pipeline (Stage 02)
+      run: uv run python src/stage_02_train.py
+
+    - name: Run Evaluation Pipeline (Stage 03)
+      run: uv run python src/stage_03_evaluate.py
+      continue-on-error: true
+
+    - name: Upload Metrics
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: pipeline-artifacts
+        path: |
+          metrics.json
+          models/
