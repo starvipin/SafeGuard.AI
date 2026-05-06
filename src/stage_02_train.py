@@ -6,8 +6,10 @@ import pandas as pd
 import torch
 from transformers import DistilBertTokenizerFast, DistilBertForSequenceClassification
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import AdamW
+import json
 
 
 
@@ -105,6 +107,46 @@ def train_model(config_path="params.yaml"):
                 print(f"Checkpoint saved at step {global_step}")
                 
         print(f"Epoch {epoch+1} Loss: {loss.item()}")
+
+
+
+    # Evaluate the model on test set
+    print("Evaluating model on test set...")
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    model.eval()
+    predictions = []
+    prediction_probs = []
+    true_labels = []
+    
+    with torch.no_grad():
+        for batch in test_loader:
+            input_ids = batch['input_ids'].to(device)
+            attention_mask = batch['attention_mask'].to(device)
+            labels = batch['labels'].to(device)
+            
+            outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+            logits = outputs.logits
+            probs = torch.softmax(logits, dim=1)[:, 1]  # Probability of positive class
+            preds = torch.argmax(logits, dim=1)
+            
+            predictions.extend(preds.cpu().numpy())
+            prediction_probs.extend(probs.cpu().numpy())
+            true_labels.extend(labels.cpu().numpy())
+    
+    accuracy = accuracy_score(true_labels, predictions)
+    f1 = f1_score(true_labels, predictions)
+    roc_auc = roc_auc_score(true_labels, prediction_probs)
+    
+    metrics = {
+        "accuracy": round(accuracy, 4),
+        "f1_score": round(f1, 4),
+        "roc_auc": round(roc_auc, 4)
+    }
+    
+    with open("metrics.json", "w") as f:
+        json.dump(metrics, f, indent=4)
+    
+    print(f"Evaluation complete. Metrics saved to metrics.json: {metrics}")
 
 
 
