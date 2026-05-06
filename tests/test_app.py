@@ -9,7 +9,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import torch
 from unittest.mock import patch, MagicMock
-with patch.dict('sys.modules', {'transformers': MagicMock()}):
+with patch.dict('sys.modules', {
+    'transformers': MagicMock(),
+    'huggingface_hub': MagicMock()
+}):
     from app import predict
 
 class TestPredictFunction:
@@ -76,7 +79,11 @@ class TestFlaskApp:
 
     def setup_method(self, method):
         """Setup test client."""
-        from app import app as flask_app
+        with patch.dict('sys.modules', {
+            'transformers': MagicMock(),
+            'huggingface_hub': MagicMock()
+        }):
+            from app import app as flask_app
         self.app = flask_app.test_client()
         self.app.testing = True
 
