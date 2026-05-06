@@ -35,6 +35,8 @@ jobs:
       run: uv run python src/stage_01_get_data.py
 
     - name: Run Training Pipeline (Stage 02)
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
       run: uv run python src/stage_02_train.py
 
     - name: Run Evaluation Pipeline (Stage 03)
