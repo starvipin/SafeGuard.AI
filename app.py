@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect
 import torch
 from transformers import DistilBertTokenizerFast, DistilBertForSequenceClassification
 import os
-from huggingface_hub import hf_hub_download
+from huggingface_hub import snapshot_download
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,13 +19,8 @@ model_path = os.path.join(model_dir, MODEL_FILENAME)
 if not os.path.exists(model_path):
     os.makedirs(model_dir, exist_ok=True)
     print("Downloading model from Hugging Face Hub...")
-    model_path = hf_hub_download(repo_id=f"{HF_USERNAME}/{MODEL_REPO}", filename=MODEL_FILENAME)
-    # Move downloaded file to model_dir if needed
-    if not model_path.startswith(model_dir):
-        import shutil
-        shutil.copy(model_path, os.path.join(model_dir, MODEL_FILENAME))
-        model_path = os.path.join(model_dir, MODEL_FILENAME)
-    print(f"Model downloaded to {model_path}")
+    snapshot_download(repo_id=f"{HF_USERNAME}/{MODEL_REPO}", local_dir=model_dir)
+    print(f"Model downloaded to {model_dir}")
 
 
 app = Flask(__name__)
