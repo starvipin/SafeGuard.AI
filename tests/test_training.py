@@ -122,7 +122,8 @@ class TestTrainModel:
             config_path = f.name
 
         try:
-            train_model(config_path)
+            with patch.dict('sys.modules', {'upload_to_hf': MagicMock()}):
+                train_model(config_path)
             # Should complete without errors
             assert mock_model.save_pretrained.called
             assert mock_tokenizer.save_pretrained.called
