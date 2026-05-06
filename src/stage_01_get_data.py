@@ -2,7 +2,7 @@ import os
 import shutil
 import yaml
 
-# Configuration file (params.yaml) ko padhne ka function
+# Function to read the configuration file (params.yaml)
 def read_params(config_path):
     with open(config_path, "r") as yaml_file:
         config = yaml.safe_load(yaml_file)
@@ -18,7 +18,7 @@ def get_data(config_path):
         print(f"Error reading config: {e}")
         return
     
-    # 1. Paths uthana (params.yaml se)
+    # 1. Extract paths (from params.yaml)
     try:
         source_data_path = config["data_source"]["local_path"]
         raw_data_dir = config["data_source"]["raw_data_dir"]
@@ -26,13 +26,13 @@ def get_data(config_path):
         print(f"Error: Missing config key {e}")
         return
     
-    # 2. Project me data folder banana (agar pehle se nahi hai)
+    # 2. Create data folder in the project (if it doesn't already exist)
     os.makedirs(raw_data_dir, exist_ok=True)
     
-    # Target file ka naam
+    # Target file name
     target_path = os.path.join(raw_data_dir, "dataset.parquet")
     
-    # 3. Data ko Data Pipeline me include karna
+    # 3. Include data in the Data Pipeline
     if os.path.exists(source_data_path):
         try:
             shutil.copy(source_data_path, target_path)
@@ -40,8 +40,8 @@ def get_data(config_path):
         except Exception as e:
             print(f"Error copying file: {e}")
     else:
-        print(f"Error: Source file '{source_data_path}' nahi mili. Kya aapne extraction script chalayi thi?")
+        print(f"Error: Source file '{source_data_path}' not found. Did you run the extraction script?")
 
 if __name__ == "__main__":
-    # Script chalaane par ye function trigger hoga
+    # This function will trigger when the script is run
     get_data(config_path="params.yaml")

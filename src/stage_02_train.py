@@ -120,12 +120,12 @@ def train_model(config_path="params.yaml"):
         upload_model(tmp_model_dir)
         print("Model upload complete.")
 
-    # --- NAYA CODE: Saare checkpoints delete karne ke liye ---
+    # --- NEW CODE: To delete all checkpoints ---
     print("Cleaning up intermediate checkpoints...")
     models_dir = "models"
     if os.path.exists(models_dir):
         for folder_name in os.listdir(models_dir):
-            # Sirf wahi folder delete karega jiska naam 'checkpoint-' se shuru hota hai
+            # It will only delete folders whose name starts with 'checkpoint-'
             if folder_name.startswith("checkpoint-"):
                 folder_path = os.path.join(models_dir, folder_name)
                 if os.path.isdir(folder_path):

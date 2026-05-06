@@ -2,18 +2,18 @@ from huggingface_hub import HfApi, login
 import os
 from dotenv import load_dotenv
 
-# Ye line .env file se tumhara token Python me load karegi
+# This line will load your token from the .env file into Python
 load_dotenv()
 
-# Ab os.getenv sahi se token nikal lega
+# Now os.getenv will correctly fetch the token
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-# Ek chota sa check taaki pata chal jaye token load hua ya nahi
+# A quick check to see if the token was loaded
 if HF_TOKEN is None:
-    print("Error: .env file se token load nahi hua! Check karo ki variable ka naam exact HF_TOKEN hai.")
+    print("Error: Token not loaded from .env file! Check if the variable name is exactly HF_TOKEN.")
     exit()
 
-# Token se login kar lo
+# Log in using the token
 login(token=HF_TOKEN)
 
 HF_USERNAME = "sainivipin"
@@ -25,17 +25,17 @@ api = HfApi()
 repo_id = f"{HF_USERNAME}/{MODEL_REPO}"
 
 def upload_model():
-    print(f"Repository check/create ho rahi hai: {repo_id}")
+    print(f"Checking/creating repository: {repo_id}")
     api.create_repo(repo_id=repo_id, repo_type="model", exist_ok=True)
     
-    print("Repository mil gayi! Ab files upload ho rahi hain, wait karo...")
+    print("Repository found! Files are uploading now, please wait...")
     api.upload_folder(
         folder_path=MODEL_DIR,
         repo_id=repo_id,
         repo_type="model",
         commit_message="Initial model upload"
     )
-    print("Badhai ho! Model successfully Hugging Face Hub par upload ho gaya hai.")
+    print("Congratulations! Model successfully uploaded to Hugging Face Hub.")
 
 if __name__ == "__main__":
     upload_model()

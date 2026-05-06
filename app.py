@@ -25,7 +25,7 @@ if not os.path.exists(model_path):
 
 app = Flask(__name__)
 
-# Model load karna
+# Load model
 print("Loading model and tokenizer...")
 if os.path.exists(model_dir):
     tokenizer = DistilBertTokenizerFast.from_pretrained(model_dir)
@@ -56,7 +56,7 @@ all_fraud_keywords = [
     "invoice", "bill payment", "processing fee", "bitcoin", "wallet address","wallet",
 ]
 
-# History store karne ke liye ek list
+# A list to store history
 message_history = []
 
 def predict(text):
@@ -96,7 +96,7 @@ def index():
         msg = request.form.get("message", "").strip()
         if msg:
             status, reason, alert_class = predict(msg)
-            # Naya result history list mein sabse upar (index 0) daalna
+            # Insert the new result at the top (index 0) of the history list
             message_history.insert(0, {
                 "text": msg,
                 "status": status,
@@ -104,7 +104,7 @@ def index():
                 "alert_class": alert_class
             })
 
-    # History ko template mein bhej rahe hain
+    # Sending history to the template
     return render_template("index.html", history=message_history)
 
 @app.route("/clear_history", methods=["POST"])
