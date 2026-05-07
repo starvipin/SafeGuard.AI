@@ -1,3 +1,12 @@
+---
+title: SafeGuard AI
+emoji: 🛡️
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 5000
+---
+
 # SafeGuard AI - Advanced Fraud Detection System
 
 A machine learning-powered fraud detection application using DistilBERT that analyzes messages in real-time to identify potentially fraudulent content. Features a beautiful Flask web interface, comprehensive test suite, and automated CI/CD pipeline.
