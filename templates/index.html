@@ -121,7 +121,6 @@
             font-size:30px;
             color:white;
             box-shadow: 0 10px 35px rgba(124,58,237,0.5);
-            /* New positioning for the pulse effect */
             position: relative; 
             z-index: 1;
         }
@@ -138,20 +137,13 @@
         }
 
         @keyframes sonar-pulse {
-            0% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
-            100% {
-                transform: scale(1.45);
-                opacity: 0;
-            }
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.45); opacity: 0; }
         }
 
         /* GENTLE FLOAT FOR THE SHIELD ICON */
         .logo i {
             animation: float-icon 3s ease-in-out infinite;
-            /* Static soft glow instead of animated shadow for better performance */
             text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
         }
 
@@ -688,7 +680,7 @@
         }
 
         // =========================
-        // SUBMIT LOADING (WITH 3 SECONDS DELAY FOR AI EFFECT)
+        // SUBMIT LOADING & AJAX FETCH (NO REFRESH)
         // =========================
         document
             .getElementById('checkForm')
@@ -723,7 +715,42 @@
 
                 setTimeout(() => {
                     clearInterval(scanInterval);
-                    HTMLFormElement.prototype.submit.call(form); 
+                    
+                    // ==========================================
+                    // NAYA LOGIC: Bina refresh kiye data bhejna
+                    // ==========================================
+                    const formData = new FormData(form);
+
+                    fetch(window.location.href, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        const newHistory = doc.querySelector('.history-list').innerHTML;
+                        document.querySelector('.history-list').innerHTML = newHistory;
+
+                        msgBox.value = ''; 
+                        btn.classList.remove('scanning');
+                        msgBox.classList.remove('scanning');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-shield"></i> Analyze Message';
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error Occurred';
+                        
+                        setTimeout(() => {
+                            btn.classList.remove('scanning');
+                            msgBox.classList.remove('scanning');
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa-solid fa-shield"></i> Analyze Message';
+                        }, 2000);
+                    });
+
                 }, 3200);
 
             });
