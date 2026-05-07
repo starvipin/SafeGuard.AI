@@ -1,222 +1,473 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeGuard AI - Advanced Fraud Detection</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px 0;
-        }
-        .container {
-            max-width: 800px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            color: #333;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-        .header p {
-            color: #666;
-            font-size: 1.1rem;
-        }
-        .form-section {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 40px;
-            border: 2px solid #e9ecef;
-        }
-        .btn-check {
-            background: linear-gradient(45deg, #28a745, #20c997);
-            border: none;
-            padding: 12px 30px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 25px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-        }
-        .btn-check:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-        }
-        .history-section h4 {
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-        }
-        .history-section h4 i {
-            margin-right: 10px;
-        }
-        .history-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #e9ecef;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-        .history-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-        .alert {
-            border-radius: 8px;
-            border: none;
-        }
-        .alert-danger {
-            background: linear-gradient(45deg, #dc3545, #fd7e14);
-            color: white;
-        }
-        .alert-warning {
-            background: linear-gradient(45deg, #ffc107, #fd7e14);
-            color: #333;
-        }
-        .alert-success {
-            background: linear-gradient(45deg, #28a745, #20c997);
-            color: white;
-        }
-        .no-history {
-            text-align: center;
-            color: #999;
-            font-style: italic;
-            padding: 40px;
-        }
-        .clear-btn {
-            background: #dc3545;
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-        .clear-btn:hover {
-            background: #c82333;
-            transform: scale(1.05);
-        }
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-                margin: 10px;
-            }
-            .form-section {
-                padding: 20px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="header">
-        <h1><i class="fas fa-shield-alt"></i> SafeGuard AI</h1>
-        <p>Advanced Fraud Message Detection System</p>
-    </div>
-
-    <div class="form-section">
-        <h3 class="mb-3"><i class="fas fa-search"></i> Check Your Message</h3>
-        <form method="POST" id="checkForm">
-            <div class="mb-3">
-                <label for="message" class="form-label fw-bold">Enter Suspicious Message:</label>
-                <textarea class="form-control" id="message" name="message" rows="4" placeholder="Paste your message here to analyze..." required></textarea>
-            </div>
-            <button type="submit" class="btn btn-check w-100">
-                <i class="fas fa-check-circle"></i> Analyze Message
-            </button>
-        </form>
-    </div>
-
-    <div class="history-section">
-        <h4><i class="fas fa-history"></i> Analysis History
-            {% if history %}
-            <button class="btn clear-btn ms-auto" onclick="clearHistory()">Clear All</button>
-            {% endif %}
-        </h4>
-        
-        {% if history %}
-            {% for item in history %}
-            <div class="history-card">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <strong class="text-muted">Message:</strong>
-                    <small class="text-muted">{{ loop.index }}</small>
-                </div>
-                <p class="mb-3">{{ item.text }}</p>
-                <div class="alert alert-{{ item.alert_class }}" role="alert">
-                    <div class="d-flex align-items-center">
-                        {% if item.status == 'FRAUD' %}
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                        {% elif item.status == 'WARNING' %}
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                        {% elif item.status == 'LEGIT' %}
-                            <i class="fas fa-check-circle me-2"></i>
-                        {% endif %}
-                        <div>
-                            <strong>{{ item.status }}</strong><br>
-                            <small>{{ item.reason }}</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="no-history">
-                <i class="fas fa-inbox fa-3x mb-3"></i>
-                <p>No messages analyzed yet. Start by checking a suspicious message above!</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    function clearHistory() {
-        if (confirm('Are you sure you want to clear all history?')) {
-            fetch('/clear_history', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-            }).then(() => {
-                window.location.reload();
-            });
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SafeGuard AI • Modern Fraud Detection</title>
+  <!-- Bootstrap 5 + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    // Add some animation on form submit
-    document.getElementById('checkForm').addEventListener('submit', function() {
-        const btn = this.querySelector('button');
+    :root {
+      --bg-light: #f4f6fc;
+      --card-light: rgba(255, 255, 255, 0.8);
+      --text-light: #1e293b;
+      --subtext-light: #475569;
+      --border-light: rgba(0, 0, 0, 0.05);
+      --input-bg-light: #ffffff;
+      
+      --bg-dark: #0b0f19;
+      --card-dark: rgba(18, 25, 40, 0.9);
+      --text-dark: #e2e8f0;
+      --subtext-dark: #94a3b8;
+      --border-dark: rgba(255, 255, 255, 0.08);
+      --input-bg-dark: #1e293b;
+      
+      --accent-primary: #6d5dfc;
+      --accent-secondary: #38bdf8;
+      --danger-gradient: linear-gradient(135deg, #ef4444, #f97316);
+      --warning-gradient: linear-gradient(135deg, #f59e0b, #f97316);
+      --success-gradient: linear-gradient(135deg, #10b981, #06b6d4);
+      
+      --glass-blur: blur(16px);
+      --border-radius-card: 2.5rem;
+      --border-radius-element: 1.75rem;
+      --transition: all 0.3s ease;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-light);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 1.5rem;
+      transition: background 0.4s, color 0.4s;
+      position: relative;
+    }
+
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    /* animated background glow */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 30% 40%, rgba(109, 93, 252, 0.2), transparent 60%),
+                  radial-gradient(circle at 70% 80%, rgba(56, 189, 248, 0.2), transparent 60%);
+      z-index: 0;
+      transition: opacity 0.4s;
+    }
+    body.dark::before {
+      background: radial-gradient(circle at 30% 40%, rgba(109, 93, 252, 0.3), transparent 60%),
+                  radial-gradient(circle at 70% 80%, rgba(56, 189, 248, 0.25), transparent 60%);
+    }
+
+    .main-wrapper {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* theme toggle */
+    .theme-toggle {
+      position: absolute;
+      top: 1.5rem;
+      right: 2rem;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 3rem;
+      padding: 0.5rem;
+      display: flex;
+      gap: 0.3rem;
+      z-index: 10;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    .theme-btn {
+      background: transparent;
+      border: none;
+      color: #1e293b;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.2s;
+      background: rgba(255,255,255,0.5);
+    }
+    body.dark .theme-btn {
+      color: #f1f5f9;
+      background: rgba(30, 41, 59, 0.7);
+    }
+    .theme-btn.active {
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      color: #6d5dfc;
+    }
+    body.dark .theme-btn.active {
+      background: #334155;
+      color: #38bdf8;
+      box-shadow: 0 0 14px rgba(56,189,248,0.5);
+    }
+
+    .glass-card {
+      background: var(--card-light);
+      backdrop-filter: var(--glass-blur);
+      border-radius: var(--border-radius-card);
+      padding: 2.5rem 2.2rem;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+      border: 1px solid var(--border-light);
+      transition: background 0.4s, border 0.4s, box-shadow 0.4s;
+    }
+    body.dark .glass-card {
+      background: var(--card-dark);
+      border: 1px solid var(--border-dark);
+      box-shadow: 0 25px 50px -10px rgba(0,0,0,0.6);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-weight: 700;
+      font-size: 2.3rem;
+      letter-spacing: -0.5px;
+      color: var(--text-light);
+    }
+    body.dark .header-title {
+      color: var(--text-dark);
+    }
+    .header-title i {
+      background: linear-gradient(135deg, #6d5dfc, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2.5rem;
+    }
+
+    .form-control, .form-control:focus {
+      background: var(--input-bg-light);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 1.5rem;
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      color: var(--text-light);
+      transition: 0.3s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+    body.dark .form-control {
+      background: var(--input-bg-dark);
+      border-color: rgba(255,255,255,0.1);
+      color: #f1f5f9;
+    }
+    .form-control:focus {
+      border-color: #6d5dfc;
+      box-shadow: 0 0 0 4px rgba(109,93,252,0.25);
+    }
+
+    .btn-analyze {
+      background: linear-gradient(115deg, #6d5dfc, #4f46e5);
+      border: none;
+      border-radius: 3rem;
+      padding: 1rem 2rem;
+      font-weight: 600;
+      font-size: 1.2rem;
+      letter-spacing: 0.3px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+      transition: all 0.3s;
+      box-shadow: 0 10px 25px -8px rgba(109,93,252,0.5);
+    }
+    .btn-analyze:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 30px -8px rgba(79,70,229,0.7);
+      background: linear-gradient(115deg, #5a4af1, #4338ca);
+    }
+
+    .history-item {
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(8px);
+      border-radius: 2rem;
+      padding: 1.5rem;
+      margin-bottom: 1.4rem;
+      border: 1px solid rgba(0,0,0,0.04);
+      transition: 0.2s;
+    }
+    body.dark .history-item {
+      background: rgba(30,41,59,0.7);
+      border-color: rgba(255,255,255,0.05);
+    }
+    .history-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 30px -12px rgba(0,0,0,0.2);
+    }
+
+    .badge-status {
+      padding: 0.5rem 1.3rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .clear-btn {
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #b91c1c;
+      border-radius: 2.5rem;
+      padding: 0.5rem 1.4rem;
+      font-weight: 500;
+      transition: 0.2s;
+    }
+    body.dark .clear-btn {
+      background: rgba(239,68,68,0.2);
+      color: #fecaca;
+    }
+    .clear-btn:hover {
+      background: #ef4444;
+      color: white;
+    }
+
+    @media (max-width: 600px) {
+      .glass-card {
+        padding: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body class="light">
+  <div class="theme-toggle" id="themeToggleContainer">
+    <button class="theme-btn active" id="lightBtn" title="Light mode"><i class="fas fa-sun"></i></button>
+    <button class="theme-btn" id="darkBtn" title="Dark mode"><i class="fas fa-moon"></i></button>
+  </div>
+
+  <div class="main-wrapper">
+    <!-- Header Card -->
+    <div class="glass-card text-center">
+      <div class="header-title justify-content-center mb-2">
+        <i class="fas fa-shield-haltered"></i> SafeGuard AI
+      </div>
+      <p class="mb-0" style="font-size: 1.1rem; opacity: 0.8;">Real‑time fraud message intelligence</p>
+    </div>
+
+    <!-- Analysis Form -->
+    <div class="glass-card">
+      <h4 class="mb-3 fw-semibold"><i class="fas fa-magnifying-glass-chart me-2"></i>Analyze message</h4>
+      <form id="checkForm">
+        <div class="mb-3">
+          <textarea class="form-control" id="messageInput" name="message" rows="4" placeholder="Paste suspicious message, link or offer..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-analyze w-100" id="analyzeBtn">
+          <i class="fas fa-shield-check"></i> Scan for threats
+        </button>
+      </form>
+    </div>
+
+    <!-- History Section -->
+    <div class="glass-card" id="historyCard">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="fw-semibold mb-0"><i class="fas fa-clock-rotate-left me-2"></i>Recent checks</h4>
+        <button class="btn clear-btn" id="clearHistoryBtn" style="display: none;">
+          <i class="fas fa-trash-can me-1"></i>Clear
+        </button>
+      </div>
+      <div id="historyContainer">
+        <div class="text-center py-5 text-muted" id="emptyHistory">
+          <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+          <p>No messages scanned yet. Start analyzing above.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function() {
+      // ---------- Theme toggle ----------
+      const body = document.body;
+      const lightBtn = document.getElementById('lightBtn');
+      const darkBtn = document.getElementById('darkBtn');
+
+      function setTheme(mode) {
+        if (mode === 'dark') {
+          body.classList.add('dark');
+          body.classList.remove('light');
+          lightBtn.classList.remove('active');
+          darkBtn.classList.add('active');
+          localStorage.setItem('safeguardTheme', 'dark');
+        } else {
+          body.classList.remove('dark');
+          body.classList.add('light');
+          darkBtn.classList.remove('active');
+          lightBtn.classList.add('active');
+          localStorage.setItem('safeguardTheme', 'light');
+        }
+      }
+
+      lightBtn.addEventListener('click', () => setTheme('light'));
+      darkBtn.addEventListener('click', () => setTheme('dark'));
+
+      // load saved theme
+      const savedTheme = localStorage.getItem('safeguardTheme') || 'light';
+      setTheme(savedTheme);
+
+      // ---------- In-memory history (simulated backend) ----------
+      let historyData = [];  // { id, text, status, reason, alertClass }
+
+      // Simple fraud detection logic (client-side demo)
+      function analyzeMessage(text) {
+        const lower = text.toLowerCase();
+        const fraudKeywords = ['urgent', 'click here', 'claim prize', 'won', 'free money', 'account suspended', 
+                               'verify now', 'bitcoin transfer', 'ssn', 'password', 'credit card', 'act now',
+                               'limited offer', 'exclusive deal', 'you have been selected', 'congratulations'];
+        const warningKeywords = ['link', 'http', 'gift', 'offer', 'discount', 'limited', 'register'];
+        
+        let fraudScore = 0;
+        fraudKeywords.forEach(kw => { if (lower.includes(kw)) fraudScore += 2; });
+        warningKeywords.forEach(kw => { if (lower.includes(kw)) fraudScore += 0.7; });
+        
+        if (fraudScore >= 4) {
+          return { status: 'FRAUD', reason: 'High-risk patterns detected (urgent action, credentials).', alertClass: 'danger' };
+        } else if (fraudScore >= 1.8) {
+          return { status: 'WARNING', reason: 'Suspicious language or links. Proceed with caution.', alertClass: 'warning' };
+        } else {
+          return { status: 'LEGIT', reason: 'No significant fraud indicators found.', alertClass: 'success' };
+        }
+      }
+
+      function renderHistory() {
+        const container = document.getElementById('historyContainer');
+        const emptyDiv = document.getElementById('emptyHistory');
+        const clearBtn = document.getElementById('clearHistoryBtn');
+        
+        if (!historyData.length) {
+          container.innerHTML = '';
+          container.appendChild(emptyDiv);
+          emptyDiv.style.display = 'block';
+          clearBtn.style.display = 'none';
+          return;
+        }
+        
+        clearBtn.style.display = 'inline-block';
+        emptyDiv.style.display = 'none';
+        
+        let html = '';
+        historyData.slice().reverse().forEach((item, idx) => {
+          const alertGradient = item.alertClass === 'danger' ? 'var(--danger-gradient)' :
+                                (item.alertClass === 'warning' ? 'var(--warning-gradient)' : 'var(--success-gradient)');
+          const icon = item.status === 'FRAUD' ? 'fa-triangle-exclamation' :
+                       (item.status === 'WARNING' ? 'fa-circle-exclamation' : 'fa-circle-check');
+          
+          html += `
+            <div class="history-item">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-muted small"><i class="far fa-message"></i> Message</span>
+                <span class="badge bg-light text-dark">#${historyData.length - idx}</span>
+              </div>
+              <p class="mb-2 fw-medium">${escapeHtml(item.text)}</p>
+              <div style="background: ${alertGradient}; border-radius: 2rem; padding: 0.7rem 1.3rem; color: white; display: flex; align-items: center; gap: 0.8rem;">
+                <i class="fas ${icon} fa-lg"></i>
+                <div>
+                  <strong>${item.status}</strong><br>
+                  <small>${item.reason}</small>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+
+      function escapeHtml(text) {
+        return String(text).replace(/[&<>"]/g, function(m) {
+          if (m === '&') return '&amp;';
+          if (m === '<') return '&lt;';
+          if (m === '>') return '&gt;';
+          if (m === '"') return '&quot;';
+          return m;
+        });
+      }
+
+      function addToHistory(text) {
+        const analysis = analyzeMessage(text);
+        historyData.push({
+          id: Date.now(),
+          text: text,
+          status: analysis.status,
+          reason: analysis.reason,
+          alertClass: analysis.alertClass
+        });
+        // keep max 10 entries
+        if (historyData.length > 10) historyData.shift();
+        renderHistory();
+      }
+
+      function clearHistory() {
+        historyData = [];
+        renderHistory();
+      }
+
+      // Event listeners
+      document.getElementById('checkForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const textarea = document.getElementById('messageInput');
+        const message = textarea.value.trim();
+        if (!message) return;
+        
+        const btn = document.getElementById('analyzeBtn');
+        const originalHTML = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
         btn.disabled = true;
-    });
+        
+        // simulate brief processing
+        setTimeout(() => {
+          addToHistory(message);
+          textarea.value = '';
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+        }, 400);
+      });
 
-    // Allow submitting with Enter key
-    document.getElementById('message').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            document.getElementById('checkForm').submit();
+      document.getElementById('clearHistoryBtn').addEventListener('click', function() {
+        if (confirm('Clear all analysis history?')) {
+          clearHistory();
         }
-    });
-</script>
+      });
 
+      // Allow Enter to submit (but Shift+Enter for new line)
+      document.getElementById('messageInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          document.getElementById('checkForm').dispatchEvent(new Event('submit'));
+        }
+      });
+
+      // initial render
+      renderHistory();
+    })();
+  </script>
 </body>
 </html>
