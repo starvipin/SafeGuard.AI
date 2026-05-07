@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main  # Jab bhi main branch par push hoga, ye chalega
+      - master
 
 jobs:
   sync-to-hub:
