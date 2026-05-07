@@ -27,4 +27,4 @@ jobs:
           git remote add hf https://sainivipin:$HF_TOKEN@huggingface.co/spaces/sainivipin/SafeGuard-Live
           
           # Ye command aapka code Hugging Face par push kar degi
-          git push --force hf main
+          git push --force hf HEAD:main
