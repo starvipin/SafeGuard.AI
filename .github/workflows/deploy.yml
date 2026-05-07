@@ -1,30 +1,29 @@
-name: Deploy to Hugging Face
+name: Sync to Hugging Face Docker Space
 
 on:
   push:
     branches:
-      - main
+      - main  # Jab bhi main branch par push hoga, ye chalega
 
 jobs:
-  deploy:
+  sync-to-hub:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Full history fetch karne ke liye
+          fetch-depth: 0
+          lfs: true # Agar aapke paas large model files hain toh ye zaruri hai
 
-      - name: Push to Hub
+      - name: Push Code and Dockerfile to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Git configuration
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           
-          # Hugging Face repository ko remote ki tarah add karein
-          # Username: sainivipin | Repo: SafeGuard-Live
+          # Apna Hugging Face username aur Space name niche check kar lein
           git remote add hf https://sainivipin:$HF_TOKEN@huggingface.co/spaces/sainivipin/SafeGuard-Live
           
-          # Force push karein (ya normal push agar history match karti hai)
+          # Ye command aapka code Hugging Face par push kar degi
           git push --force hf main
