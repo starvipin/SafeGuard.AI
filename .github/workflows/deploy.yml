@@ -3,8 +3,7 @@ name: Sync to Hugging Face Docker Space
 on:
   push:
     branches:
-      - main  # Jab bhi main branch par push hoga, ye chalega
-      - master
+      - main  
 
 jobs:
   sync-to-hub:
@@ -14,7 +13,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          lfs: true # Agar aapke paas large model files hain toh ye zaruri hai
+          lfs: true # large file
 
       - name: Push Code and Dockerfile to Hugging Face
         env:
