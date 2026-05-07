@@ -1,475 +1,494 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>SafeGuard AI • Modern Fraud Detection</title>
-  <!-- Bootstrap 5 + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeGuard AI - Fraud Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    :root {
-      --bg-light: #f4f6fc;
-      --card-light: rgba(255, 255, 255, 0.8);
-      --text-light: #1e293b;
-      --subtext-light: #475569;
-      --border-light: rgba(0, 0, 0, 0.05);
-      --input-bg-light: #ffffff;
-      
-      --bg-dark: #0b0f19;
-      --card-dark: rgba(18, 25, 40, 0.9);
-      --text-dark: #e2e8f0;
-      --subtext-dark: #94a3b8;
-      --border-dark: rgba(255, 255, 255, 0.08);
-      --input-bg-dark: #1e293b;
-      
-      --accent-primary: #6d5dfc;
-      --accent-secondary: #38bdf8;
-      --danger-gradient: linear-gradient(135deg, #ef4444, #f97316);
-      --warning-gradient: linear-gradient(135deg, #f59e0b, #f97316);
-      --success-gradient: linear-gradient(135deg, #10b981, #06b6d4);
-      
-      --glass-blur: blur(16px);
-      --border-radius-card: 2.5rem;
-      --border-radius-element: 1.75rem;
-      --transition: all 0.3s ease;
-    }
+        :root {
+            --bg-light: #f0f4ff;
+            --bg-dark: #0f172a;
+            --card-light: rgba(255, 255, 255, 0.9);
+            --card-dark: rgba(30, 41, 59, 0.9);
+            --text-light: #1e293b;
+            --text-dark: #e2e8f0;
+            --accent: #6366f1;
+        }
 
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: var(--bg-light);
-      color: var(--text-light);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0;
-      padding: 1.5rem;
-      transition: background 0.4s, color 0.4s;
-      position: relative;
-    }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: all 0.3s;
+        }
 
-    body.dark {
-      background: var(--bg-dark);
-      color: var(--text-dark);
-    }
+        body.dark {
+            background: var(--bg-dark);
+            color: var(--text-dark);
+        }
 
-    /* animated background glow */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at 30% 40%, rgba(109, 93, 252, 0.2), transparent 60%),
-                  radial-gradient(circle at 70% 80%, rgba(56, 189, 248, 0.2), transparent 60%);
-      z-index: 0;
-      transition: opacity 0.4s;
-    }
-    body.dark::before {
-      background: radial-gradient(circle at 30% 40%, rgba(109, 93, 252, 0.3), transparent 60%),
-                  radial-gradient(circle at 70% 80%, rgba(56, 189, 248, 0.25), transparent 60%);
-    }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 30% 40%, rgba(99, 102, 241, 0.15), transparent 60%),
+                        radial-gradient(circle at 70% 80%, rgba(56, 189, 248, 0.1), transparent 60%);
+            z-index: 0;
+        }
 
-    .main-wrapper {
-      position: relative;
-      z-index: 2;
-      width: 100%;
-      max-width: 900px;
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
-    }
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            width: 100%;
+        }
 
-    /* theme toggle */
-    .theme-toggle {
-      position: absolute;
-      top: 1.5rem;
-      right: 2rem;
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 3rem;
-      padding: 0.5rem;
-      display: flex;
-      gap: 0.3rem;
-      z-index: 10;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-    }
-    .theme-btn {
-      background: transparent;
-      border: none;
-      color: #1e293b;
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      font-size: 1.3rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: 0.2s;
-      background: rgba(255,255,255,0.5);
-    }
-    body.dark .theme-btn {
-      color: #f1f5f9;
-      background: rgba(30, 41, 59, 0.7);
-    }
-    .theme-btn.active {
-      background: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      color: #6d5dfc;
-    }
-    body.dark .theme-btn.active {
-      background: #334155;
-      color: #38bdf8;
-      box-shadow: 0 0 14px rgba(56,189,248,0.5);
-    }
+        .glass-card {
+            background: var(--card-light);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 40px;
+            margin-bottom: 25px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+        }
 
-    .glass-card {
-      background: var(--card-light);
-      backdrop-filter: var(--glass-blur);
-      border-radius: var(--border-radius-card);
-      padding: 2.5rem 2.2rem;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
-      border: 1px solid var(--border-light);
-      transition: background 0.4s, border 0.4s, box-shadow 0.4s;
-    }
-    body.dark .glass-card {
-      background: var(--card-dark);
-      border: 1px solid var(--border-dark);
-      box-shadow: 0 25px 50px -10px rgba(0,0,0,0.6);
-    }
+        body.dark .glass-card {
+            background: var(--card-dark);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
 
-    .header-title {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      font-weight: 700;
-      font-size: 2.3rem;
-      letter-spacing: -0.5px;
-      color: var(--text-light);
-    }
-    body.dark .header-title {
-      color: var(--text-dark);
-    }
-    .header-title i {
-      background: linear-gradient(135deg, #6d5dfc, #38bdf8);
-      /* Standard property for compatibility */
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-size: 2.5rem;
-    }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            padding: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
 
-    .form-control, .form-control:focus {
-      background: var(--input-bg-light);
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 1.5rem;
-      padding: 1rem 1.5rem;
-      font-size: 1rem;
-      color: var(--text-light);
-      transition: 0.3s;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-    }
-    body.dark .form-control {
-      background: var(--input-bg-dark);
-      border-color: rgba(255,255,255,0.1);
-      color: #f1f5f9;
-    }
-    .form-control:focus {
-      border-color: #6d5dfc;
-      box-shadow: 0 0 0 4px rgba(109,93,252,0.25);
-    }
+        body.dark .theme-toggle {
+            background: rgba(30, 41, 59, 0.5);
+        }
 
-    .btn-analyze {
-      background: linear-gradient(115deg, #6d5dfc, #4f46e5);
-      border: none;
-      border-radius: 3rem;
-      padding: 1rem 2rem;
-      font-weight: 600;
-      font-size: 1.2rem;
-      letter-spacing: 0.3px;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.7rem;
-      transition: all 0.3s;
-      box-shadow: 0 10px 25px -8px rgba(109,93,252,0.5);
-    }
-    .btn-analyze:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 18px 30px -8px rgba(79,70,229,0.7);
-      background: linear-gradient(115deg, #5a4af1, #4338ca);
-    }
+        .theme-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            background: transparent;
+            color: #64748b;
+            transition: 0.3s;
+        }
 
-    .history-item {
-      background: rgba(255,255,255,0.7);
-      backdrop-filter: blur(8px);
-      border-radius: 2rem;
-      padding: 1.5rem;
-      margin-bottom: 1.4rem;
-      border: 1px solid rgba(0,0,0,0.04);
-      transition: 0.2s;
-    }
-    body.dark .history-item {
-      background: rgba(30,41,59,0.7);
-      border-color: rgba(255,255,255,0.05);
-    }
-    .history-item:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 30px -12px rgba(0,0,0,0.2);
-    }
+        .theme-btn.active {
+            background: white;
+            color: var(--accent);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
 
-    .badge-status {
-      padding: 0.5rem 1.3rem;
-      border-radius: 2rem;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+        body.dark .theme-btn.active {
+            background: #334155;
+            color: #38bdf8;
+        }
 
-    .clear-btn {
-      background: rgba(239,68,68,0.15);
-      border: 1px solid rgba(239,68,68,0.3);
-      color: #b91c1c;
-      border-radius: 2.5rem;
-      padding: 0.5rem 1.4rem;
-      font-weight: 500;
-      transition: 0.2s;
-    }
-    body.dark .clear-btn {
-      background: rgba(239,68,68,0.2);
-      color: #fecaca;
-    }
-    .clear-btn:hover {
-      background: #ef4444;
-      color: white;
-    }
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
 
-    @media (max-width: 600px) {
-      .glass-card {
-        padding: 1.8rem;
-      }
-    }
-  </style>
+        .header i {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #6366f1, #38bdf8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header h1 {
+            font-weight: 700;
+            font-size: 2rem;
+            margin: 10px 0;
+        }
+
+        .form-control {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 15px 20px;
+            font-size: 1rem;
+            transition: 0.3s;
+            resize: vertical;
+        }
+
+        body.dark .form-control {
+            background: #1e293b;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+            outline: none;
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 15px;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 20px;
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-fraud {
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            color: white;
+            display: block;
+        }
+
+        .result-warning {
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            color: #1e293b;
+            display: block;
+        }
+
+        .result-legit {
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            color: white;
+            display: block;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark .history-item {
+            background: rgba(30, 41, 59, 0.7);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .glass-card {
+                padding: 25px;
+                border-radius: 20px;
+            }
+        }
+    </style>
 </head>
 <body class="light">
-  <div class="theme-toggle" id="themeToggleContainer">
-    <button class="theme-btn active" id="lightBtn" title="Light mode"><i class="fas fa-sun"></i></button>
-    <button class="theme-btn" id="darkBtn" title="Dark mode"><i class="fas fa-moon"></i></button>
-  </div>
 
-  <div class="main-wrapper">
-    <!-- Header Card -->
-    <div class="glass-card text-center">
-      <div class="header-title justify-content-center mb-2">
-        <i class="fas fa-shield-haltered"></i> SafeGuard AI
-      </div>
-      <p class="mb-0" style="font-size: 1.1rem; opacity: 0.8;">Real‑time fraud message intelligence</p>
-    </div>
-
-    <!-- Analysis Form -->
-    <div class="glass-card">
-      <h4 class="mb-3 fw-semibold"><i class="fas fa-magnifying-glass-chart me-2"></i>Analyze message</h4>
-      <form id="checkForm">
-        <div class="mb-3">
-          <textarea class="form-control" id="messageInput" name="message" rows="4" placeholder="Paste suspicious message, link or offer..."></textarea>
-        </div>
-        <button type="submit" class="btn btn-analyze w-100" id="analyzeBtn">
-          <i class="fas fa-shield-check"></i> Scan for threats
+    <!-- Theme Toggle Buttons -->
+    <div class="theme-toggle">
+        <button class="theme-btn active" onclick="setTheme('light')" title="Light Mode">
+            <i class="fas fa-sun"></i>
         </button>
-      </form>
-    </div>
-
-    <!-- History Section -->
-    <div class="glass-card" id="historyCard">
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <h4 class="fw-semibold mb-0"><i class="fas fa-clock-rotate-left me-2"></i>Recent checks</h4>
-        <button class="btn clear-btn" id="clearHistoryBtn" style="display: none;">
-          <i class="fas fa-trash-can me-1"></i>Clear
+        <button class="theme-btn" onclick="setTheme('dark')" title="Dark Mode">
+            <i class="fas fa-moon"></i>
         </button>
-      </div>
-      <div id="historyContainer">
-        <div class="text-center py-5 text-muted" id="emptyHistory">
-          <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
-          <p>No messages scanned yet. Start analyzing above.</p>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    (function() {
-      // ---------- Theme toggle ----------
-      const body = document.body;
-      const lightBtn = document.getElementById('lightBtn');
-      const darkBtn = document.getElementById('darkBtn');
-
-      function setTheme(mode) {
-        if (mode === 'dark') {
-          body.classList.add('dark');
-          body.classList.remove('light');
-          lightBtn.classList.remove('active');
-          darkBtn.classList.add('active');
-          localStorage.setItem('safeguardTheme', 'dark');
-        } else {
-          body.classList.remove('dark');
-          body.classList.add('light');
-          darkBtn.classList.remove('active');
-          lightBtn.classList.add('active');
-          localStorage.setItem('safeguardTheme', 'light');
-        }
-      }
-
-      lightBtn.addEventListener('click', () => setTheme('light'));
-      darkBtn.addEventListener('click', () => setTheme('dark'));
-
-      // load saved theme
-      const savedTheme = localStorage.getItem('safeguardTheme') || 'light';
-      setTheme(savedTheme);
-
-      // ---------- In-memory history (simulated backend) ----------
-      let historyData = [];  // { id, text, status, reason, alertClass }
-
-      // Simple fraud detection logic (client-side demo)
-      function analyzeMessage(text) {
-        const lower = text.toLowerCase();
-        const fraudKeywords = ['urgent', 'click here', 'claim prize', 'won', 'free money', 'account suspended', 
-                               'verify now', 'bitcoin transfer', 'ssn', 'password', 'credit card', 'act now',
-                               'limited offer', 'exclusive deal', 'you have been selected', 'congratulations'];
-        const warningKeywords = ['link', 'http', 'gift', 'offer', 'discount', 'limited', 'register'];
-        
-        let fraudScore = 0;
-        fraudKeywords.forEach(kw => { if (lower.includes(kw)) fraudScore += 2; });
-        warningKeywords.forEach(kw => { if (lower.includes(kw)) fraudScore += 0.7; });
-        
-        if (fraudScore >= 4) {
-          return { status: 'FRAUD', reason: 'High-risk patterns detected (urgent action, credentials).', alertClass: 'danger' };
-        } else if (fraudScore >= 1.8) {
-          return { status: 'WARNING', reason: 'Suspicious language or links. Proceed with caution.', alertClass: 'warning' };
-        } else {
-          return { status: 'LEGIT', reason: 'No significant fraud indicators found.', alertClass: 'success' };
-        }
-      }
-
-      function renderHistory() {
-        const container = document.getElementById('historyContainer');
-        const emptyDiv = document.getElementById('emptyHistory');
-        const clearBtn = document.getElementById('clearHistoryBtn');
-        
-        if (!historyData.length) {
-          container.innerHTML = '';
-          container.appendChild(emptyDiv);
-          emptyDiv.style.display = 'block';
-          clearBtn.style.display = 'none';
-          return;
-        }
-        
-        clearBtn.style.display = 'inline-block';
-        emptyDiv.style.display = 'none';
-        
-        let html = '';
-        historyData.slice().reverse().forEach((item, idx) => {
-          const alertGradient = item.alertClass === 'danger' ? 'var(--danger-gradient)' :
-                                (item.alertClass === 'warning' ? 'var(--warning-gradient)' : 'var(--success-gradient)');
-          const icon = item.status === 'FRAUD' ? 'fa-triangle-exclamation' :
-                       (item.status === 'WARNING' ? 'fa-circle-exclamation' : 'fa-circle-check');
-          
-          html += `
-            <div class="history-item">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <span class="text-muted small"><i class="far fa-message"></i> Message</span>
-                <span class="badge bg-light text-dark">#${historyData.length - idx}</span>
-              </div>
-              <p class="mb-2 fw-medium">${escapeHtml(item.text)}</p>
-              <div style="background: ${alertGradient}; border-radius: 2rem; padding: 0.7rem 1.3rem; color: white; display: flex; align-items: center; gap: 0.8rem;">
-                <i class="fas ${icon} fa-lg"></i>
-                <div>
-                  <strong>${item.status}</strong><br>
-                  <small>${item.reason}</small>
-                </div>
-              </div>
+    <div class="container">
+        <!-- Header -->
+        <div class="glass-card">
+            <div class="header">
+                <i class="fas fa-shield-haltered"></i>
+                <h1>SafeGuard AI</h1>
+                <p style="opacity: 0.7;">Advanced Fraud Message Detection</p>
             </div>
-          `;
-        });
-        container.innerHTML = html;
-      }
+        </div>
 
-      function escapeHtml(text) {
-        return String(text).replace(/[&<>"]/g, function(m) {
-          if (m === '&') return '&amp;';
-          if (m === '<') return '&lt;';
-          if (m === '>') return '&gt;';
-          if (m === '"') return '&quot;';
-          return m;
-        });
-      }
+        <!-- Input Form -->
+        <div class="glass-card">
+            <h3 style="margin-bottom: 15px;">
+                <i class="fas fa-search" style="color: var(--accent);"></i> Check Message
+            </h3>
+            <form id="checkForm" onsubmit="return analyzeNow(event)">
+                <textarea 
+                    class="form-control" 
+                    id="messageInput" 
+                    rows="4" 
+                    placeholder="Paste your suspicious message here..."
+                ></textarea>
+                <button type="submit" class="btn-analyze">
+                    <i class="fas fa-shield-check"></i> Analyze Message
+                </button>
+            </form>
+            <div id="resultBox" class="result-box"></div>
+        </div>
 
-      function addToHistory(text) {
-        const analysis = analyzeMessage(text);
-        historyData.push({
-          id: Date.now(),
-          text: text,
-          status: analysis.status,
-          reason: analysis.reason,
-          alertClass: analysis.alertClass
-        });
-        // keep max 10 entries
-        if (historyData.length > 10) historyData.shift();
-        renderHistory();
-      }
+        <!-- History Section -->
+        <div class="glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h4 style="margin: 0;">
+                    <i class="fas fa-history" style="color: var(--accent);"></i> Analysis History
+                </h4>
+                <button 
+                    id="clearBtn" 
+                    onclick="clearHistory()" 
+                    style="display: none; background: #ef4444; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer;"
+                >
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
+            <div id="historyContainer">
+                <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                    <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <p>No messages analyzed yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      function clearHistory() {
-        historyData = [];
-        renderHistory();
-      }
-
-      // Event listeners
-      document.getElementById('checkForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const textarea = document.getElementById('messageInput');
-        const message = textarea.value.trim();
-        if (!message) return;
-        
-        const btn = document.getElementById('analyzeBtn');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
-        btn.disabled = true;
-        
-        // simulate brief processing
-        setTimeout(() => {
-          addToHistory(message);
-          textarea.value = '';
-          btn.innerHTML = originalHTML;
-          btn.disabled = false;
-        }, 400);
-      });
-
-      document.getElementById('clearHistoryBtn').addEventListener('click', function() {
-        if (confirm('Clear all analysis history?')) {
-          clearHistory();
+    <script>
+        // ============ THEME TOGGLE ============
+        function setTheme(mode) {
+            const body = document.body;
+            const buttons = document.querySelectorAll('.theme-btn');
+            
+            if (mode === 'dark') {
+                body.classList.add('dark');
+                buttons[0].classList.remove('active');
+                buttons[1].classList.add('active');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark');
+                buttons[0].classList.add('active');
+                buttons[1].classList.remove('active');
+                localStorage.setItem('theme', 'light');
+            }
         }
-      });
 
-      // Allow Enter to submit (but Shift+Enter for new line)
-      document.getElementById('messageInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          document.getElementById('checkForm').dispatchEvent(new Event('submit'));
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        setTheme(savedTheme);
+
+        // ============ HISTORY ARRAY ============
+        let history = [];
+
+        // ============ FRAUD DETECTION LOGIC ============
+        function detectFraud(text) {
+            const lower = text.toLowerCase();
+            
+            const fraudWords = [
+                'urgent', 'click here', 'claim prize', 'won', 'free money',
+                'account suspended', 'verify now', 'bitcoin', 'ssn',
+                'password', 'credit card', 'act now', 'congratulations',
+                'you won', 'limited offer', 'exclusive deal', 'selected'
+            ];
+            
+            const warningWords = [
+                'link', 'http', 'gift', 'offer', 'discount',
+                'register', 'login', 'confirm', 'update'
+            ];
+            
+            let score = 0;
+            
+            fraudWords.forEach(word => {
+                if (lower.includes(word)) score += 2;
+            });
+            
+            warningWords.forEach(word => {
+                if (lower.includes(word)) score += 1;
+            });
+            
+            if (score >= 4) {
+                return {
+                    status: 'FRAUD',
+                    reason: 'High risk - Contains fraud indicators',
+                    className: 'result-fraud',
+                    icon: 'fa-triangle-exclamation'
+                };
+            } else if (score >= 2) {
+                return {
+                    status: 'WARNING',
+                    reason: 'Suspicious - Proceed with caution',
+                    className: 'result-warning',
+                    icon: 'fa-circle-exclamation'
+                };
+            } else {
+                return {
+                    status: 'LEGIT',
+                    reason: 'Safe - No threats detected',
+                    className: 'result-legit',
+                    icon: 'fa-circle-check'
+                };
+            }
         }
-      });
 
-      // initial render
-      renderHistory();
-    })();
-  </script>
+        // ============ ANALYZE FUNCTION (NO DELAY) ============
+        function analyzeNow(event) {
+            event.preventDefault();
+            
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            
+            if (!text) {
+                alert('Please enter a message to analyze');
+                return false;
+            }
+            
+            // Turant analysis - koi delay nahi
+            const result = detectFraud(text);
+            
+            // Result box update
+            const resultBox = document.getElementById('resultBox');
+            resultBox.className = 'result-box ' + result.className;
+            resultBox.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas ${result.icon}" style="font-size: 1.5rem;"></i>
+                    <div>
+                        <strong style="font-size: 1.1rem;">${result.status}</strong><br>
+                        <small>${result.reason}</small>
+                    </div>
+                </div>
+            `;
+            
+            // History mein add karo
+            history.unshift({
+                text: text,
+                status: result.status,
+                reason: result.reason,
+                className: result.className,
+                icon: result.icon
+            });
+            
+            // Sirf 10 entries rakho
+            if (history.length > 10) history.pop();
+            
+            // History render karo
+            renderHistory();
+            
+            // Input clear karo
+            input.value = '';
+            
+            return false;
+        }
+
+        // ============ RENDER HISTORY ============
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                        <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                        <p>No messages analyzed yet</p>
+                    </div>
+                `;
+                clearBtn.style.display = 'none';
+                return;
+            }
+            
+            clearBtn.style.display = 'inline-block';
+            
+            let html = '';
+            history.forEach((item, index) => {
+                html += `
+                    <div class="history-item">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <small style="opacity: 0.7;">Message</small>
+                            <small style="opacity: 0.7;">#${index + 1}</small>
+                        </div>
+                        <p style="margin-bottom: 10px;">${escapeHtml(item.text)}</p>
+                        <div class="result-box ${item.className}" style="margin-top: 0;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fas ${item.icon}"></i>
+                                <div>
+                                    <strong>${item.status}</strong><br>
+                                    <small>${item.reason}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // ============ CLEAR HISTORY ============
+        function clearHistory() {
+            if (confirm('Delete all analysis history?')) {
+                history = [];
+                renderHistory();
+            }
+        }
+
+        // ============ ESCAPE HTML ============
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============ ENTER KEY SUBMIT ============
+        document.getElementById('messageInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                analyzeNow(new Event('submit'));
+            }
+        });
+    </script>
+
 </body>
 </html>
