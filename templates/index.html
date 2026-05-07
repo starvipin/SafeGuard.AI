@@ -1,493 +1,726 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeGuard AI - Fraud Detection</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>SafeGuard AI</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
         }
 
-        :root {
-            --bg-light: #f0f4ff;
-            --bg-dark: #0f172a;
-            --card-light: rgba(255, 255, 255, 0.9);
-            --card-dark: rgba(30, 41, 59, 0.9);
-            --text-light: #1e293b;
-            --text-dark: #e2e8f0;
-            --accent: #6366f1;
+        :root{
+            /* DARK */
+            --bg:#060816;
+            --card:#0d1325;
+            --card2:#121a31;
+            --text:#ffffff;
+            --text2:#a5b4d4;
+            --border:rgba(255,255,255,0.08);
+
+            --primary:#7c3aed;
+            --primary2:#4f46e5;
+
+            --success:#10b981;
+            --warning:#f59e0b;
+            --danger:#ef4444;
+
+            --shadow:0 20px 60px rgba(0,0,0,0.45);
         }
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: var(--bg-light);
-            color: var(--text-light);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            transition: all 0.3s;
+        body.light-mode{
+            --bg:#eef2ff;
+            --card:#ffffff;
+            --card2:#f8faff;
+            --text:#0f172a;
+            --text2:#64748b;
+            --border:rgba(15,23,42,0.08);
+            --shadow:0 15px 40px rgba(15,23,42,0.08);
         }
 
-        body.dark {
-            background: var(--bg-dark);
-            color: var(--text-dark);
+        body{
+            font-family:'Outfit',sans-serif;
+            background:var(--bg);
+            color:var(--text);
+            min-height:100vh;
+            overflow-x:hidden;
+            transition:0.3s ease;
         }
 
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(circle at 30% 40%, rgba(99, 102, 241, 0.15), transparent 60%),
-                        radial-gradient(circle at 70% 80%, rgba(56, 189, 248, 0.1), transparent 60%);
-            z-index: 0;
+        /* BACKGROUND GLOW */
+        .bg-glow{
+            position:fixed;
+            width:700px;
+            height:700px;
+            border-radius:50%;
+            filter:blur(120px);
+            z-index:-1;
+            opacity:0.35;
         }
 
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 800px;
-            width: 100%;
+        .glow1{
+            background:#7c3aed;
+            top:-200px;
+            left:-150px;
         }
 
-        .glass-card {
-            background: var(--card-light);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            padding: 40px;
-            margin-bottom: 25px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            transition: all 0.3s;
+        .glow2{
+            background:#2563eb;
+            bottom:-250px;
+            right:-150px;
         }
 
-        body.dark .glass-card {
-            background: var(--card-dark);
-            border-color: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        /* MAIN */
+        .main-container{
+            width:100%;
+            min-height:100vh;
+            padding:28px;
         }
 
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-            display: flex;
-            gap: 5px;
-            background: rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(10px);
-            border-radius: 50px;
-            padding: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        .dashboard{
+            max-width:1600px;
+            margin:auto;
         }
 
-        body.dark .theme-toggle {
-            background: rgba(30, 41, 59, 0.5);
+        /* NAVBAR */
+        .topbar{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:28px;
+            gap:20px;
+            flex-wrap:wrap;
         }
 
-        .theme-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            font-size: 1.2rem;
-            background: transparent;
-            color: #64748b;
-            transition: 0.3s;
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:18px;
         }
 
-        .theme-btn.active {
-            background: white;
-            color: var(--accent);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        .logo{
+            width:72px;
+            height:72px;
+            border-radius:24px;
+            background:linear-gradient(135deg, var(--primary), var(--primary2));
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:30px;
+            color:white;
+            box-shadow: 0 10px 35px rgba(124,58,237,0.5);
         }
 
-        body.dark .theme-btn.active {
-            background: #334155;
-            color: #38bdf8;
+        /* LOGO ICON PULSE ANIMATION */
+        .logo i {
+            animation: pulse-icon 2s infinite;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 10px;
+        @keyframes pulse-icon {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px transparent); }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)); }
         }
 
-        .header i {
-            font-size: 3rem;
-            background: linear-gradient(135deg, #6366f1, #38bdf8);
-            background-clip: text;
+        /* FUTURISTIC TITLE EFFECT */
+        .brand-text h1{
+            font-size:2.2rem;
+            font-weight:800;
+            margin:0;
+            /* Holographic Gradient Text */
+            background: linear-gradient(90deg, #7c3aed, #06b6d4, #7c3aed);
+            background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: holographic-shine 3s linear infinite;
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
         }
 
-        .header h1 {
-            font-weight: 700;
-            font-size: 2rem;
-            margin: 10px 0;
+        @keyframes holographic-shine {
+            to { background-position: 200% center; }
         }
 
-        .form-control {
-            background: #ffffff;
-            border: 2px solid #e2e8f0;
-            border-radius: 20px;
-            padding: 15px 20px;
-            font-size: 1rem;
-            transition: 0.3s;
-            resize: vertical;
+        /* ACTIVE TERMINAL DOT ON SUBTITLE */
+        .brand-text p{
+            margin-top:4px;
+            color:var(--text2);
+            font-size:1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        body.dark .form-control {
-            background: #1e293b;
-            border-color: #334155;
-            color: #e2e8f0;
+        .brand-text p::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            animation: blink 1.2s infinite;
+            box-shadow: 0 0 10px #10b981, 0 0 15px #10b981;
         }
 
-        .form-control:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-            outline: none;
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.8); }
         }
 
-        .btn-analyze {
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
+        .top-actions{
+            display:flex;
+            align-items:center;
+            gap:14px;
+        }
+
+        .theme-btn{
+            width:55px;
+            height:55px;
+            border:none;
+            border-radius:18px;
+            background:var(--card);
+            color:var(--text);
+            font-size:20px;
+            border:1px solid var(--border);
+            transition:0.3s ease;
+        }
+
+        .theme-btn:hover{
+            transform:translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* GRID */
+        .grid-layout{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:28px;
+        }
+
+        /* CARD */
+        .glass-card{
+            background:rgba(255,255,255,0.03);
+            backdrop-filter:blur(20px);
+            border:1px solid var(--border);
+            border-radius:30px;
+            overflow:hidden;
+            box-shadow:var(--shadow);
+        }
+
+        body.light-mode .glass-card{
+            background:rgba(255,255,255,0.8);
+        }
+
+        .card-header-custom{
+            padding:26px 28px;
+            border-bottom:1px solid var(--border);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        .card-title{
+            display:flex;
+            align-items:center;
+            gap:14px;
+        }
+
+        .card-title .icon{
+            width:48px;
+            height:48px;
+            border-radius:16px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:linear-gradient(135deg, var(--primary), var(--primary2));
+            color:white;
+            font-size:20px;
+        }
+
+        .card-title h3{
+            margin:0;
+            font-size:1.3rem;
+            font-weight:700;
+        }
+
+        .card-title p{
+            margin:2px 0 0;
+            color:var(--text2);
+            font-size:0.92rem;
+        }
+
+        .card-body-custom{
+            padding:28px;
+        }
+
+        /* TEXTAREA */
+        .message-box{
+            width:100%;
+            min-height:280px;
+            border:none;
+            outline:none;
+            resize:none;
+            border-radius:24px;
+            background:var(--card2);
+            color:var(--text);
+            padding:24px;
+            font-size:1rem;
+            line-height:1.7;
+            border:1px solid transparent;
+            transition:0.3s ease;
+        }
+
+        .message-box:focus{
+            border:1px solid rgba(124,58,237,0.5);
+            box-shadow: 0 0 0 5px rgba(124,58,237,0.15);
+        }
+
+        .message-box::placeholder{
+            color:#94a3b8;
+        }
+
+        /* BUTTON */
+        .analyze-btn{
+            width:100%;
+            margin-top:22px;
+            border:none;
+            border-radius:22px;
+            padding:18px;
+            font-size:1rem;
+            font-weight:700;
+            color:white;
+            background:linear-gradient(135deg, var(--primary), var(--primary2));
+            transition:0.3s ease;
+            box-shadow: 0 12px 35px rgba(124,58,237,0.4);
+        }
+
+        .analyze-btn:hover{
+            transform:translateY(-3px);
+        }
+
+        /* =========================
+           AI SCANNING EFFECTS 
+           ========================= */
+        .analyze-btn.scanning {
+            background: linear-gradient(270deg, var(--primary), #06b6d4, var(--primary2), var(--primary));
+            background-size: 300% 300%;
+            animation: ai-gradient-shift 2s ease infinite, ai-pulse-glow 1.5s infinite;
+            cursor: not-allowed;
             color: white;
-            border: none;
-            border-radius: 25px;
-            padding: 15px 30px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
         }
 
-        .btn-analyze:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        .message-box.scanning {
+            border: 1px solid var(--primary);
+            animation: text-box-pulse 1.5s infinite;
         }
 
-        .result-box {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 20px;
-            display: none;
-            animation: fadeIn 0.3s;
+        @keyframes ai-gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes ai-pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(124, 58, 237, 0.5); }
+            50% { box-shadow: 0 0 35px rgba(6, 182, 212, 0.8), 0 0 15px rgba(124, 58, 237, 0.6); }
+            100% { box-shadow: 0 0 15px rgba(124, 58, 237, 0.5); }
         }
 
-        .result-fraud {
-            background: linear-gradient(135deg, #ef4444, #f97316);
-            color: white;
-            display: block;
+        @keyframes text-box-pulse {
+            0% { box-shadow: inset 0 0 10px rgba(124, 58, 237, 0.1); }
+            50% { box-shadow: inset 0 0 30px rgba(124, 58, 237, 0.3); }
+            100% { box-shadow: inset 0 0 10px rgba(124, 58, 237, 0.1); }
         }
 
-        .result-warning {
-            background: linear-gradient(135deg, #f59e0b, #f97316);
-            color: #1e293b;
-            display: block;
+        /* HISTORY */
+        .history-list{
+            max-height:700px;
+            overflow:auto;
+            padding-right:6px;
         }
 
-        .result-legit {
-            background: linear-gradient(135deg, #10b981, #06b6d4);
-            color: white;
-            display: block;
+        .history-list::-webkit-scrollbar{
+            width:7px;
         }
 
-        .history-item {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 20px;
-            margin-top: 15px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
+        .history-list::-webkit-scrollbar-thumb{
+            background:rgba(255,255,255,0.12);
+            border-radius:20px;
         }
 
-        body.dark .history-item {
-            background: rgba(30, 41, 59, 0.7);
-            border-color: rgba(255, 255, 255, 0.05);
+        .history-item{
+            background:var(--card2);
+            border:1px solid var(--border);
+            border-radius:24px;
+            padding:22px;
+            margin-bottom:18px;
+            transition:0.3s ease;
         }
 
-        .badge {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
+        .history-item:hover{
+            transform:translateY(-3px);
         }
 
-        @media (max-width: 768px) {
-            .glass-card {
-                padding: 25px;
-                border-radius: 20px;
+        .history-top{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:14px;
+        }
+
+        .history-id{
+            font-size:0.9rem;
+            color:var(--text2);
+        }
+
+        .message-content{
+            color:var(--text2);
+            line-height:1.7;
+            margin-bottom:18px;
+            word-break:break-word;
+        }
+
+        /* STATUS */
+        .status{
+            display:flex;
+            align-items:center;
+            gap:16px;
+            border-radius:20px;
+            padding:16px;
+            color:white;
+        }
+
+        .status-icon{
+            width:55px;
+            height:55px;
+            border-radius:18px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.15);
+            font-size:22px;
+            flex-shrink:0;
+        }
+
+        .status h5{
+            margin:0;
+            font-size:1rem;
+            font-weight:700;
+        }
+
+        .status p{
+            margin:3px 0 0;
+            opacity:0.92;
+            font-size:0.92rem;
+        }
+
+        .fraud{ background:linear-gradient(135deg, #ef4444, #dc2626); }
+        .warning{ background:linear-gradient(135deg, #f59e0b, #ea580c); }
+        .legit{ background:linear-gradient(135deg, #10b981, #059669); }
+
+        /* EMPTY */
+        .empty{
+            min-height:450px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-direction:column;
+            text-align:center;
+            color:var(--text2);
+        }
+
+        .empty i{
+            font-size:70px;
+            margin-bottom:20px;
+            opacity:0.5;
+        }
+
+        .empty h4{
+            font-weight:700;
+        }
+
+        /* CLEAR BTN */
+        .clear-btn{
+            border:none;
+            background:#ef4444;
+            color:white;
+            padding:12px 18px;
+            border-radius:16px;
+            font-weight:600;
+            transition:0.3s ease;
+        }
+
+        .clear-btn:hover{
+            transform:translateY(-2px);
+        }
+
+        /* MOBILE */
+        @media(max-width:1200px){
+            .grid-layout{
+                grid-template-columns:1fr;
             }
+        }
+
+        @media(max-width:768px){
+            .main-container{ padding:14px; }
+            .topbar{ align-items:flex-start; }
+            .brand{ width:100%; }
+            .brand-text h1{ font-size:1.7rem; }
+            .logo{ width:60px; height:60px; font-size:24px; }
+            .card-header-custom, .card-body-custom{ padding:20px; }
+            .message-box{ min-height:220px; padding:18px; }
+            .analyze-btn{ padding:16px; }
         }
     </style>
 </head>
-<body class="light">
 
-    <!-- Theme Toggle Buttons -->
-    <div class="theme-toggle">
-        <button class="theme-btn active" onclick="setTheme('light')" title="Light Mode">
-            <i class="fas fa-sun"></i>
-        </button>
-        <button class="theme-btn" onclick="setTheme('dark')" title="Dark Mode">
-            <i class="fas fa-moon"></i>
-        </button>
-    </div>
+<body>
 
-    <div class="container">
-        <!-- Header -->
-        <div class="glass-card">
-            <div class="header">
-                <i class="fas fa-shield-haltered"></i>
-                <h1>SafeGuard AI</h1>
-                <p style="opacity: 0.7;">Advanced Fraud Message Detection</p>
-            </div>
-        </div>
+    <!-- GLOW -->
+    <div class="bg-glow glow1"></div>
+    <div class="bg-glow glow2"></div>
 
-        <!-- Input Form -->
-        <div class="glass-card">
-            <h3 style="margin-bottom: 15px;">
-                <i class="fas fa-search" style="color: var(--accent);"></i> Check Message
-            </h3>
-            <form id="checkForm" onsubmit="return analyzeNow(event)">
-                <textarea 
-                    class="form-control" 
-                    id="messageInput" 
-                    rows="4" 
-                    placeholder="Paste your suspicious message here..."
-                ></textarea>
-                <button type="submit" class="btn-analyze">
-                    <i class="fas fa-shield-check"></i> Analyze Message
-                </button>
-            </form>
-            <div id="resultBox" class="result-box"></div>
-        </div>
+    <div class="main-container">
+        <div class="dashboard">
 
-        <!-- History Section -->
-        <div class="glass-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h4 style="margin: 0;">
-                    <i class="fas fa-history" style="color: var(--accent);"></i> Analysis History
-                </h4>
-                <button 
-                    id="clearBtn" 
-                    onclick="clearHistory()" 
-                    style="display: none; background: #ef4444; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer;"
-                >
-                    <i class="fas fa-trash"></i> Clear All
-                </button>
-            </div>
-            <div id="historyContainer">
-                <div style="text-align: center; padding: 40px; color: #94a3b8;">
-                    <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px;"></i>
-                    <p>No messages analyzed yet</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // ============ THEME TOGGLE ============
-        function setTheme(mode) {
-            const body = document.body;
-            const buttons = document.querySelectorAll('.theme-btn');
-            
-            if (mode === 'dark') {
-                body.classList.add('dark');
-                buttons[0].classList.remove('active');
-                buttons[1].classList.add('active');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                body.classList.remove('dark');
-                buttons[0].classList.add('active');
-                buttons[1].classList.remove('active');
-                localStorage.setItem('theme', 'light');
-            }
-        }
-
-        // Load saved theme
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        setTheme(savedTheme);
-
-        // ============ HISTORY ARRAY ============
-        let history = [];
-
-        // ============ FRAUD DETECTION LOGIC ============
-        function detectFraud(text) {
-            const lower = text.toLowerCase();
-            
-            const fraudWords = [
-                'urgent', 'click here', 'claim prize', 'won', 'free money',
-                'account suspended', 'verify now', 'bitcoin', 'ssn',
-                'password', 'credit card', 'act now', 'congratulations',
-                'you won', 'limited offer', 'exclusive deal', 'selected'
-            ];
-            
-            const warningWords = [
-                'link', 'http', 'gift', 'offer', 'discount',
-                'register', 'login', 'confirm', 'update'
-            ];
-            
-            let score = 0;
-            
-            fraudWords.forEach(word => {
-                if (lower.includes(word)) score += 2;
-            });
-            
-            warningWords.forEach(word => {
-                if (lower.includes(word)) score += 1;
-            });
-            
-            if (score >= 4) {
-                return {
-                    status: 'FRAUD',
-                    reason: 'High risk - Contains fraud indicators',
-                    className: 'result-fraud',
-                    icon: 'fa-triangle-exclamation'
-                };
-            } else if (score >= 2) {
-                return {
-                    status: 'WARNING',
-                    reason: 'Suspicious - Proceed with caution',
-                    className: 'result-warning',
-                    icon: 'fa-circle-exclamation'
-                };
-            } else {
-                return {
-                    status: 'LEGIT',
-                    reason: 'Safe - No threats detected',
-                    className: 'result-legit',
-                    icon: 'fa-circle-check'
-                };
-            }
-        }
-
-        // ============ ANALYZE FUNCTION (NO DELAY) ============
-        function analyzeNow(event) {
-            event.preventDefault();
-            
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-            
-            if (!text) {
-                alert('Please enter a message to analyze');
-                return false;
-            }
-            
-            // Turant analysis - koi delay nahi
-            const result = detectFraud(text);
-            
-            // Result box update
-            const resultBox = document.getElementById('resultBox');
-            resultBox.className = 'result-box ' + result.className;
-            resultBox.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <i class="fas ${result.icon}" style="font-size: 1.5rem;"></i>
-                    <div>
-                        <strong style="font-size: 1.1rem;">${result.status}</strong><br>
-                        <small>${result.reason}</small>
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <div class="brand">
+                    <div class="logo">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h1>SafeGuard AI</h1>
+                        <p>System Online & Monitoring</p>
                     </div>
                 </div>
-            `;
-            
-            // History mein add karo
-            history.unshift({
-                text: text,
-                status: result.status,
-                reason: result.reason,
-                className: result.className,
-                icon: result.icon
-            });
-            
-            // Sirf 10 entries rakho
-            if (history.length > 10) history.pop();
-            
-            // History render karo
-            renderHistory();
-            
-            // Input clear karo
-            input.value = '';
-            
-            return false;
-        }
 
-        // ============ RENDER HISTORY ============
-        function renderHistory() {
-            const container = document.getElementById('historyContainer');
-            const clearBtn = document.getElementById('clearBtn');
-            
-            if (history.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #94a3b8;">
-                        <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px;"></i>
-                        <p>No messages analyzed yet</p>
-                    </div>
-                `;
-                clearBtn.style.display = 'none';
-                return;
-            }
-            
-            clearBtn.style.display = 'inline-block';
-            
-            let html = '';
-            history.forEach((item, index) => {
-                html += `
-                    <div class="history-item">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                            <small style="opacity: 0.7;">Message</small>
-                            <small style="opacity: 0.7;">#${index + 1}</small>
-                        </div>
-                        <p style="margin-bottom: 10px;">${escapeHtml(item.text)}</p>
-                        <div class="result-box ${item.className}" style="margin-top: 0;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <i class="fas ${item.icon}"></i>
-                                <div>
-                                    <strong>${item.status}</strong><br>
-                                    <small>${item.reason}</small>
-                                </div>
+                <div class="top-actions">
+                    <button class="theme-btn" id="themeBtn">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- GRID -->
+            <div class="grid-layout">
+
+                <!-- LEFT -->
+                <div class="glass-card">
+                    <div class="card-header-custom">
+                        <div class="card-title">
+                            <div class="icon">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </div>
+                            <div>
+                                <h3>Analyze Message</h3>
+                                <p>Check suspicious messages instantly</p>
                             </div>
                         </div>
                     </div>
-                `;
-            });
-            
-            container.innerHTML = html;
+
+                    <div class="card-body-custom">
+                        <form method="POST" id="checkForm">
+                            <textarea
+                                class="message-box"
+                                id="message"
+                                name="message"
+                                placeholder="Paste suspicious message here..."
+                                required
+                            ></textarea>
+
+                            <button type="submit" class="analyze-btn">
+                                <i class="fa-solid fa-shield"></i>
+                                Analyze Message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- RIGHT -->
+                <div class="glass-card">
+                    <div class="card-header-custom">
+                        <div class="card-title">
+                            <div class="icon">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </div>
+                            <div>
+                                <h3>Analysis History</h3>
+                                <p>Previous scanned messages</p>
+                            </div>
+                        </div>
+
+                        {% if history %}
+                        <button class="clear-btn" onclick="clearHistory()">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-body-custom">
+                        <div class="history-list">
+                            {% if history %}
+                                {% for item in history %}
+                                <div class="history-item">
+                                    <div class="history-top">
+                                        <strong>#{{ loop.index }}</strong>
+                                        <div class="history-id">Analysis</div>
+                                    </div>
+
+                                    <div class="message-content">
+                                        {{ item.text }}
+                                    </div>
+
+                                    <div class="status 
+                                        {% if item.status == 'FRAUD' %} fraud
+                                        {% elif item.status == 'WARNING' %} warning
+                                        {% elif item.status == 'LEGIT' %} legit
+                                        {% endif %}
+                                    ">
+                                        <div class="status-icon">
+                                            {% if item.status == 'FRAUD' %}
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                            {% elif item.status == 'WARNING' %}
+                                                <i class="fa-solid fa-circle-exclamation"></i>
+                                            {% elif item.status == 'LEGIT' %}
+                                                <i class="fa-solid fa-circle-check"></i>
+                                            {% endif %}
+                                        </div>
+
+                                        <div>
+                                            <h5>{{ item.status }}</h5>
+                                            <p>{{ item.reason }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                            <div class="empty">
+                                <i class="fa-solid fa-shield-heart"></i>
+                                <h4>No Messages Yet</h4>
+                                <p>Start analyzing suspicious messages</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // =========================
+        // THEME
+        // =========================
+        const body = document.body;
+        const themeBtn = document.getElementById('themeBtn');
+
+        if(localStorage.getItem('theme') === 'light'){
+            body.classList.add('light-mode');
+            themeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
         }
 
-        // ============ CLEAR HISTORY ============
-        function clearHistory() {
-            if (confirm('Delete all analysis history?')) {
-                history = [];
-                renderHistory();
-            }
-        }
-
-        // ============ ESCAPE HTML ============
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // ============ ENTER KEY SUBMIT ============
-        document.getElementById('messageInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                analyzeNow(new Event('submit'));
+        themeBtn.addEventListener('click', ()=>{
+            body.classList.toggle('light-mode');
+            if(body.classList.contains('light-mode')){
+                localStorage.setItem('theme','light');
+                themeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            } else {
+                localStorage.setItem('theme','dark');
+                themeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
             }
         });
+
+        // =========================
+        // CLEAR HISTORY
+        // =========================
+        function clearHistory(){
+            if(confirm('Clear all history?')){
+                fetch('/clear_history', {
+                    method:'POST',
+                    headers:{
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                }).then(()=>{
+                    window.location.reload();
+                });
+            }
+        }
+
+        // =========================
+        // SUBMIT LOADING (WITH 3 SECONDS DELAY FOR AI EFFECT)
+        // =========================
+        document
+            .getElementById('checkForm')
+            .addEventListener('submit', function(e){
+                
+                // Form ko turant submit hone se rokenge
+                e.preventDefault(); 
+
+                const form = this;
+                const btn = form.querySelector('button');
+                const msgBox = document.getElementById('message');
+
+                // Add glowing classes
+                btn.classList.add('scanning');
+                msgBox.classList.add('scanning');
+                btn.disabled = true;
+
+                // AI Processing Steps
+                const aiSteps = [
+                    '<i class="fa-solid fa-microchip fa-beat-fade"></i> Initializing AI Core...',
+                    '<i class="fa-solid fa-radar fa-spin"></i> Scanning Threat Patterns...',
+                    '<i class="fa-solid fa-network-wired fa-fade"></i> Running ML Models...',
+                    '<i class="fa-solid fa-shield-halved fa-beat"></i> Finalizing Verdict...'
+                ];
+
+                let stepIndex = 0;
+                
+                // Show first step immediately
+                btn.innerHTML = aiSteps[stepIndex];
+
+                // Change text every 800 milliseconds
+                const scanInterval = setInterval(() => {
+                    stepIndex++;
+                    if(stepIndex < aiSteps.length) {
+                        btn.innerHTML = aiSteps[stepIndex];
+                    }
+                }, 800);
+
+                // 3.2 seconds baad jab animation pura ho jaye, tab actual submit karein
+                setTimeout(() => {
+                    clearInterval(scanInterval);
+                    HTMLFormElement.prototype.submit.call(form); // Asli submission yahan hoga
+                }, 3200);
+
+            });
+
+        // =========================
+        // ENTER KEY SUBMIT FIX
+        // =========================
+        document
+            .getElementById('message')
+            .addEventListener('keydown', function(e){
+                if(e.key === 'Enter' && !e.shiftKey){
+                    e.preventDefault();
+                    // Direct form submit karne ke bajaye, button par click trigger karenge
+                    document.querySelector('.analyze-btn').click();
+                }
+            });
     </script>
 
 </body>
