@@ -2,6 +2,7 @@ import pytest
 import os
 import tempfile
 import pandas as pd
+import torch
 from unittest.mock import patch, MagicMock
 
 
@@ -76,8 +77,13 @@ class TestTrainModel:
 
         mock_device.return_value = 'cpu'
 
+        mock_batch = {
+            'input_ids': torch.tensor([[1, 2, 3]]),
+            'attention_mask': torch.tensor([[1, 1, 1]]),
+            'labels': torch.tensor([1])
+        }
         mock_loader = MagicMock()
-        mock_loader.__iter__.return_value = [MagicMock()]  # One batch
+        mock_loader.__iter__.return_value = [mock_batch]  # One batch
         mock_dataloader.return_value = mock_loader
 
         mock_optimizer = MagicMock()
@@ -96,6 +102,7 @@ class TestTrainModel:
         mock_outputs = MagicMock()
         mock_outputs.loss = MagicMock()
         mock_outputs.loss.item.return_value = 0.5
+        mock_outputs.logits = torch.tensor([[0.2, 0.8]])
         mock_model.return_value = mock_outputs
 
         # Test training (with minimal epochs)
