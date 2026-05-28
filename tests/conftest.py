@@ -1,8 +1,23 @@
 import pytest
 import tempfile
 import os
+import importlib.abc
+import sys
 import yaml
 from unittest.mock import MagicMock
+
+os.environ.setdefault("PANDAS_STRING_STORAGE", "python")
+os.environ.setdefault("PANDAS_FUTURE_INFER_STRING", "0")
+
+
+class _BlockPyArrow(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path, target=None):
+        if fullname == "pyarrow" or fullname.startswith("pyarrow."):
+            raise ModuleNotFoundError("pyarrow is disabled during tests")
+        return None
+
+
+sys.meta_path.insert(0, _BlockPyArrow())
 
 @pytest.fixture
 def temp_config():
@@ -11,10 +26,11 @@ def temp_config():
         "data_source": {
             "local_path": "sample_data.csv",
             "raw_data_dir": "data/raw_data",
-            "dataset_name": "fraud_dataset.csv"
+            "dataset_name": "dataset.csv"
         },
         "train": {
             "model_name": "distilbert-base-uncased",
+            "model_output_dir": "models/fraud_model_final",
             "batch_size": 4,
             "epochs": 1,
             "learning_rate": 5e-5,

@@ -1,6 +1,7 @@
 import os
 import shutil
 import yaml
+import pandas as pd
 
 # Function to read the configuration file (params.yaml)
 def read_params(config_path):
@@ -30,12 +31,21 @@ def get_data(config_path):
     os.makedirs(raw_data_dir, exist_ok=True)
     
     # Target file name
-    target_path = os.path.join(raw_data_dir, "dataset.parquet")
+    target_path = os.path.join(raw_data_dir, config["data_source"].get("dataset_name", "dataset.parquet"))
     
     # 3. Include data in the Data Pipeline
     if os.path.exists(source_data_path):
         try:
-            shutil.copy(source_data_path, target_path)
+            source_ext = os.path.splitext(source_data_path)[1].lower()
+            target_ext = os.path.splitext(target_path)[1].lower()
+
+            if source_ext == ".csv" and target_ext == ".parquet":
+                pd.read_csv(source_data_path).to_parquet(target_path, index=False)
+            elif source_ext == ".parquet" and target_ext == ".csv":
+                pd.read_parquet(source_data_path).to_csv(target_path, index=False)
+            else:
+                shutil.copy(source_data_path, target_path)
+
             print(f"Stage 01 Success: Data successfully ingested to '{target_path}'")
         except Exception as e:
             print(f"Error copying file: {e}")

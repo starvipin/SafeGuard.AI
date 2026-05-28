@@ -41,13 +41,13 @@ class TestGetData:
 
     def test_get_data_success(self, temp_config):
         """Test successful data ingestion."""
-        # Create sample source data as parquet
-        source_path = os.path.join(self.temp_dir, "sample_data.parquet")
+        # Create sample source data as CSV
+        source_path = os.path.join(self.temp_dir, "sample_data.csv")
         sample_data = pd.DataFrame({
             'text': ['test message 1', 'test message 2'],
             'label': [0, 1]
         })
-        sample_data.to_parquet(source_path, index=False)
+        sample_data.to_csv(source_path, index=False)
 
         # Modify config to use temp paths
         import yaml
@@ -66,11 +66,11 @@ class TestGetData:
             get_data(test_config)
 
             # Check if target file exists
-            target_path = os.path.join(self.raw_data_dir, "dataset.parquet")
+            target_path = os.path.join(self.raw_data_dir, "dataset.csv")
             assert os.path.exists(target_path)
 
             # Check content
-            df = pd.read_parquet(target_path)
+            df = pd.read_csv(target_path)
             assert len(df) == 2
             assert list(df.columns) == ['text', 'label']
 
@@ -96,7 +96,7 @@ class TestGetData:
             get_data(test_config)
 
             # Target file should not exist
-            target_path = os.path.join(self.raw_data_dir, "dataset.parquet")
+            target_path = os.path.join(self.raw_data_dir, "dataset.csv")
             assert not os.path.exists(target_path)
 
         finally:

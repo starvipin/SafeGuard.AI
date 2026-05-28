@@ -578,11 +578,13 @@
                             </div>
                         </div>
 
-                        {% if history %}
-                        <button class="clear-btn" onclick="clearHistory()">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                        {% endif %}
+                        <div id="historyActions">
+                            {% if history %}
+                            <button class="clear-btn" onclick="clearHistory()" type="button" aria-label="Clear analysis history">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="card-body-custom">
@@ -725,13 +727,20 @@
                         method: 'POST',
                         body: formData
                     })
-                    .then(response => response.text())
+                    .then(response => {
+                        if(!response.ok){
+                            throw new Error('Request failed');
+                        }
+                        return response.text();
+                    })
                     .then(html => {
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
                         
-                        const newHistory = doc.querySelector('.history-list').innerHTML;
-                        document.querySelector('.history-list').innerHTML = newHistory;
+                        document.querySelector('.history-list').innerHTML =
+                            doc.querySelector('.history-list').innerHTML;
+                        document.querySelector('#historyActions').innerHTML =
+                            doc.querySelector('#historyActions').innerHTML;
 
                         msgBox.value = ''; 
                         btn.classList.remove('scanning');

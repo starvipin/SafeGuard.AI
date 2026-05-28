@@ -1,5 +1,6 @@
 import pytest
 import os
+import shutil
 import tempfile
 import pandas as pd
 import torch
@@ -129,8 +130,15 @@ class TestTrainModel:
             config_path = f.name
 
         try:
-            with patch.dict('sys.modules', {'upload_to_hf': MagicMock()}):
-                train_model(config_path)
+            original_cwd = os.getcwd()
+            temp_cwd = tempfile.mkdtemp()
+            try:
+                os.chdir(temp_cwd)
+                with patch.dict('sys.modules', {'upload_to_hf': MagicMock()}):
+                    train_model(config_path)
+            finally:
+                os.chdir(original_cwd)
+                shutil.rmtree(temp_cwd)
             # Should complete without errors
             assert mock_model.save_pretrained.called
             assert mock_tokenizer.save_pretrained.called

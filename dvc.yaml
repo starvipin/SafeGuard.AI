@@ -4,28 +4,31 @@ stages:
     deps:
       - src/stage_01_get_data.py
       - params.yaml
-      - sample_train.parquet
+      - data/raw_data/fraud_dataset.csv
     outs:
-      - data/raw_data/dataset.parquet
+      - data/raw_data/dataset.csv
 
   training:
     cmd: python src/stage_02_train.py
     deps:
       - src/stage_02_train.py
-      - data/raw_data/dataset.parquet
+      - data/raw_data/dataset.csv
     params:
       - train.learning_rate
-      - train.max_depth
-      - train.n_estimators
+      - train.model_name
+      - train.model_output_dir
+      - train.batch_size
+      - train.epochs
+      - train.save_steps
     outs:
-      - models/model.pkl
+      - models/fraud_model_final
 
   evaluation:
     cmd: python src/stage_03_evaluate.py
     deps:
       - src/stage_03_evaluate.py
-      - models/model.pkl
-      - data/raw_data/dataset.parquet
+      - models/fraud_model_final
+      - data/raw_data/dataset.csv
     metrics:
       - metrics.json:
           cache: false

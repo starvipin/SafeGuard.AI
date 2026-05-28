@@ -1,100 +1,91 @@
-import pytest
+import json
 import os
 import tempfile
-import json
-import pandas as pd
-import joblib
-from unittest.mock import patch, MagicMock
-from sklearn.ensemble import RandomForestClassifier
+from unittest.mock import MagicMock, patch
 
-# Add src to path
+import pandas as pd
+import pytest
+import torch
+import yaml
+
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
+
 class TestEvaluateModel:
-    """Test evaluation functionality"""
-
     def setup_method(self):
-        """Setup test data and model."""
         self.temp_dir = tempfile.mkdtemp()
+        self.data_dir = os.path.join(self.temp_dir, "data", "raw_data")
+        self.model_dir = os.path.join(self.temp_dir, "models", "fraud_model_final")
+        os.makedirs(self.data_dir, exist_ok=True)
+        os.makedirs(self.model_dir, exist_ok=True)
 
-        # Create sample data
-        self.data_path = os.path.join(self.temp_dir, "data", "raw_data", "dataset.parquet")
-        os.makedirs(os.path.dirname(self.data_path), exist_ok=True)
+        self.data_path = os.path.join(self.data_dir, "dataset.csv")
+        pd.DataFrame({
+            "text": ["safe hello", "claim now", "meeting today", "urgent otp"],
+            "label": [0, 1, 0, 1],
+        }).to_csv(self.data_path, index=False)
 
-        # Create sample parquet data (simplified for testing)
-        data = {
-            'feature1': [1, 2, 3, 4, 5, 6],
-            'feature2': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
-            'resp': [1, -1, 1, -1, 1, -1],
-            'date': [1, 1, 1, 1, 1, 1],
-            'ts_id': [1, 2, 3, 4, 5, 6],
-            'resp_1': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
-            'resp_2': [0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
-            'resp_3': [0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
-            'resp_4': [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-        }
-        df = pd.DataFrame(data)
-        df.to_parquet(self.data_path)
+        self.config_path = os.path.join(self.temp_dir, "params.yaml")
+        with open(self.config_path, "w") as f:
+            yaml.safe_dump({
+                "data_source": {
+                    "raw_data_dir": self.data_dir,
+                    "dataset_name": "dataset.csv",
+                },
+                "train": {
+                    "model_output_dir": self.model_dir,
+                    "batch_size": 2,
+                },
+            }, f)
 
-        # Create sample model
-        self.model_path = os.path.join(self.temp_dir, "models", "model.pkl")
-        os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
-
-        model = RandomForestClassifier(n_estimators=10, random_state=42)
-        X_sample = df.drop(columns=['resp', 'date', 'ts_id', 'resp_1', 'resp_2', 'resp_3', 'resp_4'])
-        y_sample = (df['resp'] > 0).astype(int)
-        model.fit(X_sample, y_sample)
-        joblib.dump(model, self.model_path)
-
-        # Change to temp directory for testing
         self.original_cwd = os.getcwd()
         os.chdir(self.temp_dir)
 
     def teardown_method(self):
-        """Cleanup."""
         os.chdir(self.original_cwd)
         import shutil
         shutil.rmtree(self.temp_dir)
 
-    @patch('stage_03_evaluate.train_test_split')
-    def test_evaluate_model(self, mock_split):
-        """Test model evaluation."""
-        # Mock train_test_split to return predictable splits
-        X_test = pd.DataFrame({
-            'feature1': [1, 2, 3],
-            'feature2': [0.1, 0.2, 0.3]
-        })
-        y_test = pd.Series([0, 1, 0])
+    @patch("stage_03_evaluate.train_test_split")
+    @patch("stage_03_evaluate.DistilBertTokenizerFast.from_pretrained")
+    @patch("stage_03_evaluate.DistilBertForSequenceClassification.from_pretrained")
+    def test_evaluate_model(self, mock_model_class, mock_tokenizer_class, mock_split):
+        mock_split.return_value = (
+            None,
+            pd.Series(["safe hello", "claim now"]),
+            None,
+            pd.Series([0, 1]),
+        )
 
-        mock_split.return_value = (None, X_test, None, y_test)
+        mock_tokenizer = MagicMock()
+        mock_tokenizer.return_value = {
+            "input_ids": [[1, 2, 3], [4, 5, 6]],
+            "attention_mask": [[1, 1, 1], [1, 1, 1]],
+        }
+        mock_tokenizer_class.return_value = mock_tokenizer
+
+        mock_model = MagicMock()
+        mock_model.return_value.logits = torch.tensor([[0.9, 0.1], [0.1, 0.9]])
+        mock_model_class.return_value = mock_model
 
         from stage_03_evaluate import evaluate_model
 
-        # Run evaluation
-        evaluate_model()
+        evaluate_model(self.config_path)
 
-        # Check if metrics file was created
-        metrics_path = "metrics.json"
-        assert os.path.exists(metrics_path)
-
-        # Check metrics content
-        with open(metrics_path, 'r') as f:
+        with open("metrics.json", "r") as f:
             metrics = json.load(f)
 
-        assert 'accuracy' in metrics
-        assert 'f1_score' in metrics
-        assert 'roc_auc' in metrics
-        assert all(isinstance(v, (int, float)) for v in metrics.values())
+        assert metrics == {
+            "accuracy": 1.0,
+            "f1_score": 1.0,
+            "roc_auc": 1.0,
+        }
 
     def test_evaluate_model_file_not_found(self):
-        """Test evaluation when files don't exist."""
-        # Remove files
         os.remove(self.data_path)
-        os.remove(self.model_path)
 
         from stage_03_evaluate import evaluate_model
 
-        # Should raise FileNotFoundError
         with pytest.raises(FileNotFoundError):
-            evaluate_model()
+            evaluate_model(self.config_path)

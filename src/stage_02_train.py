@@ -1,6 +1,5 @@
 import os
 import shutil
-import tempfile
 import yaml
 import pandas as pd
 import torch
@@ -17,6 +16,16 @@ def read_params(config_path):
     with open(config_path, "r") as yaml_file:
         config = yaml.safe_load(yaml_file)
     return config
+
+def read_training_data(data_path):
+    extension = os.path.splitext(data_path)[1].lower()
+
+    if extension == ".parquet":
+        return pd.read_parquet(data_path)
+    if extension == ".csv":
+        return pd.read_csv(data_path, encoding="latin-1")
+
+    raise ValueError(f"Unsupported training data format: {extension}")
 
 class FraudDataset(Dataset):
     def __init__(self, encodings, labels):
@@ -48,10 +57,11 @@ def train_model(config_path="params.yaml"):
     epochs = config["train"]["epochs"]
     lr = float(config["train"]["learning_rate"])
     save_steps = config["train"]["save_steps"]
+    model_output_dir = config["train"].get("model_output_dir", "models/fraud_model_final")
     
     print("Loading data...")
     try:
-        df = pd.read_csv(data_path, encoding="latin-1")
+        df = read_training_data(data_path)
     except FileNotFoundError:
         print(f"Error: Data file not found at {data_path}")
         return
@@ -150,17 +160,18 @@ def train_model(config_path="params.yaml"):
 
 
 
-    # Final Model Save to temporary directory and upload
-    with tempfile.TemporaryDirectory() as tmp_model_dir:
-        model.save_pretrained(tmp_model_dir)
-        tokenizer.save_pretrained(tmp_model_dir)
-        print(f"Training complete! Final model saved temporarily at {tmp_model_dir}.")
+    os.makedirs(model_output_dir, exist_ok=True)
+    model.save_pretrained(model_output_dir)
+    tokenizer.save_pretrained(model_output_dir)
+    print(f"Training complete! Final model saved at {model_output_dir}.")
 
-        # Automatically upload to Hugging Face after training
+    if os.getenv("HF_TOKEN"):
         print("Uploading model to Hugging Face Hub...")
         from upload_to_hf import upload_model
-        upload_model(tmp_model_dir)
+        upload_model(model_output_dir)
         print("Model upload complete.")
+    else:
+        print("HF_TOKEN not found. Skipping Hugging Face upload.")
 
     # --- NEW CODE: To delete all checkpoints ---
     print("Cleaning up intermediate checkpoints...")

@@ -12,33 +12,14 @@ load_dotenv()
 HF_USERNAME = "sainivipin"
 MODEL_REPO = "fraud-model-final"
 MODEL_FILENAME = "model.safetensors"
-
-# Download model from Hugging Face if not present
-model_dir = "models/fraud_model_final"
-model_path = os.path.join(model_dir, MODEL_FILENAME)
-if not os.path.exists(model_path):
-    os.makedirs(model_dir, exist_ok=True)
-    print("Downloading model from Hugging Face Hub...")
-    snapshot_download(repo_id=f"{HF_USERNAME}/{MODEL_REPO}", local_dir=model_dir)
-    print(f"Model downloaded to {model_dir}")
-
+MODEL_DIR = "models/fraud_model_final"
 
 app = Flask(__name__)
 
-# Load model
-print("Loading model and tokenizer...")
-if os.path.exists(model_dir):
-    tokenizer = DistilBertTokenizerFast.from_pretrained(model_dir)
-    model = DistilBertForSequenceClassification.from_pretrained(model_dir)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-    model.eval()
-    print(f"Model loaded successfully on {device}!")
-else:
-    print("Model not found, running in test mode or without model.")
-    tokenizer = None
-    model = None
-    device = None
+tokenizer = None
+model = None
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model_load_attempted = False
 
 all_fraud_keywords = [
     "immediately", "24 hours", "tonight", "blocked", "suspended", "asap", 
@@ -59,7 +40,41 @@ all_fraud_keywords = [
 # A list to store history
 message_history = []
 
+def load_model():
+    global tokenizer, model, model_load_attempted
+
+    if model is not None and tokenizer is not None:
+        return True
+
+    if model_load_attempted:
+        return False
+
+    model_load_attempted = True
+    model_path = os.path.join(MODEL_DIR, MODEL_FILENAME)
+
+    try:
+        if not os.path.exists(model_path):
+            os.makedirs(MODEL_DIR, exist_ok=True)
+            print("Downloading model from Hugging Face Hub...")
+            snapshot_download(repo_id=f"{HF_USERNAME}/{MODEL_REPO}", local_dir=MODEL_DIR)
+            print(f"Model downloaded to {MODEL_DIR}")
+
+        print("Loading model and tokenizer...")
+        tokenizer = DistilBertTokenizerFast.from_pretrained(MODEL_DIR)
+        model = DistilBertForSequenceClassification.from_pretrained(MODEL_DIR)
+        model.to(device)
+        model.eval()
+        print(f"Model loaded successfully on {device}!")
+        return True
+    except Exception as exc:
+        print(f"Model unavailable, using keyword fallback. Reason: {exc}")
+        tokenizer = None
+        model = None
+        return False
+
 def predict(text):
+    load_model()
+
     if model is None or tokenizer is None:
         # Fallback to keyword-based detection if model not loaded
         text_lower = text.lower()
