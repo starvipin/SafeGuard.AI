@@ -80,7 +80,7 @@ def predict(text):
         text_lower = text.lower()
         found_keywords = [word for word in all_fraud_keywords if word in text_lower]
         if len(found_keywords) > 0:
-            return "WARNING", f"Suspicious words found: {', '.join(found_keywords)}", "warning"
+            return "FRAUD", "Suspicious Message", "danger"
         else:
             return "LEGIT", "Safe Message", "success"
     
@@ -101,7 +101,7 @@ def predict(text):
         found_keywords = [word for word in all_fraud_keywords if word in text_lower]
         
         if len(found_keywords) > 0:
-            return "WARNING", f"Model said LEGIT, but suspicious words found: {', '.join(found_keywords)}", "warning"
+            return "FRAUD", "Suspicious Message", "danger"
         else:
             return "LEGIT", "Safe Message", "success"
 

@@ -361,6 +361,71 @@
         }
 
         /* HISTORY */
+        .result-card{
+            min-height:360px;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            gap:22px;
+        }
+
+        .latest-message{
+            color:var(--text2);
+            line-height:1.7;
+            word-break:break-word;
+            background:var(--card2);
+            border:1px solid var(--border);
+            border-radius:20px;
+            padding:18px;
+        }
+
+        .verdict{
+            display:flex;
+            align-items:center;
+            gap:20px;
+            border-radius:24px;
+            padding:28px;
+            color:white;
+        }
+
+        .verdict .status-icon{
+            width:70px;
+            height:70px;
+            border-radius:22px;
+            font-size:30px;
+        }
+
+        .verdict h2{
+            margin:0;
+            font-size:2.4rem;
+            font-weight:800;
+            line-height:1;
+        }
+
+        .history-toggle{
+            border:none;
+            background:var(--card2);
+            color:var(--text);
+            padding:12px 18px;
+            border-radius:16px;
+            font-weight:600;
+            border:1px solid var(--border);
+            transition:0.3s ease;
+        }
+
+        .history-toggle:hover{
+            transform:translateY(-2px);
+        }
+
+        .history-panel{
+            display:none;
+            margin-top:22px;
+        }
+
+        .history-panel.show{
+            display:block;
+        }
+
         .history-list{
             max-height:700px;
             overflow:auto;
@@ -570,16 +635,20 @@
                     <div class="card-header-custom">
                         <div class="card-title">
                             <div class="icon">
-                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                <i class="fa-solid fa-shield-halved"></i>
                             </div>
                             <div>
-                                <h3>Analysis History</h3>
-                                <p>Previous scanned messages</p>
+                                <h3>Result</h3>
+                                <p>Legit or Fraud verdict</p>
                             </div>
                         </div>
 
                         <div id="historyActions">
                             {% if history %}
+                            <button class="history-toggle" onclick="toggleHistory()" type="button" aria-label="Show analysis history">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                History
+                            </button>
                             <button class="clear-btn" onclick="clearHistory()" type="button" aria-label="Clear analysis history">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
@@ -588,9 +657,43 @@
                     </div>
 
                     <div class="card-body-custom">
-                        <div class="history-list">
+                        <div id="resultArea" class="result-card">
                             {% if history %}
-                                {% for item in history %}
+                                {% set latest = history[0] %}
+                                <div class="verdict
+                                    {% if latest.status == 'FRAUD' %} fraud
+                                    {% elif latest.status == 'LEGIT' %} legit
+                                    {% endif %}
+                                ">
+                                    <div class="status-icon">
+                                        {% if latest.status == 'FRAUD' %}
+                                            <i class="fa-solid fa-triangle-exclamation"></i>
+                                        {% elif latest.status == 'LEGIT' %}
+                                            <i class="fa-solid fa-circle-check"></i>
+                                        {% endif %}
+                                    </div>
+
+                                    <div>
+                                        <h2>{{ latest.status }}</h2>
+                                    </div>
+                                </div>
+
+                                <div class="latest-message">
+                                    {{ latest.text }}
+                                </div>
+                            {% else %}
+                            <div class="empty">
+                                <i class="fa-solid fa-shield-heart"></i>
+                                <h4>No Result Yet</h4>
+                                <p>Analyze a message to see LEGIT or FRAUD</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div id="historyPanel" class="history-panel">
+                            <div class="history-list">
+                                {% if history %}
+                                    {% for item in history %}
                                 <div class="history-item">
                                     <div class="history-top">
                                         <strong>#{{ loop.index }}</strong>
@@ -603,15 +706,12 @@
 
                                     <div class="status 
                                         {% if item.status == 'FRAUD' %} fraud
-                                        {% elif item.status == 'WARNING' %} warning
                                         {% elif item.status == 'LEGIT' %} legit
                                         {% endif %}
                                     ">
                                         <div class="status-icon">
                                             {% if item.status == 'FRAUD' %}
                                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                                            {% elif item.status == 'WARNING' %}
-                                                <i class="fa-solid fa-circle-exclamation"></i>
                                             {% elif item.status == 'LEGIT' %}
                                                 <i class="fa-solid fa-circle-check"></i>
                                             {% endif %}
@@ -623,14 +723,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                {% endfor %}
-                            {% else %}
-                            <div class="empty">
-                                <i class="fa-solid fa-shield-heart"></i>
-                                <h4>No Messages Yet</h4>
-                                <p>Start analyzing suspicious messages</p>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -668,6 +763,11 @@
         // =========================
         // CLEAR HISTORY
         // =========================
+        function toggleHistory(){
+            const historyPanel = document.getElementById('historyPanel');
+            historyPanel.classList.toggle('show');
+        }
+
         function clearHistory(){
             if(confirm('Clear all history?')){
                 fetch('/clear_history', {
@@ -737,8 +837,11 @@
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
                         
-                        document.querySelector('.history-list').innerHTML =
-                            doc.querySelector('.history-list').innerHTML;
+                        document.querySelector('#resultArea').innerHTML =
+                            doc.querySelector('#resultArea').innerHTML;
+                        document.querySelector('#historyPanel').innerHTML =
+                            doc.querySelector('#historyPanel').innerHTML;
+                        document.querySelector('#historyPanel').classList.remove('show');
                         document.querySelector('#historyActions').innerHTML =
                             doc.querySelector('#historyActions').innerHTML;
 

@@ -54,8 +54,8 @@ class TestPredictFunction:
             assert reason == "Safe Message"
             assert alert_class == "success"
 
-    def test_predict_warning(self):
-        """Test prediction with suspicious keywords."""
+    def test_predict_keyword_fraud(self):
+        """Test fraud prediction with suspicious keywords."""
         import torch
         from app import predict
 
@@ -68,9 +68,9 @@ class TestPredictFunction:
             # Test with suspicious keywords
             status, reason, alert_class = predict("Click here to update your account immediately")
 
-            assert status == "WARNING"
-            assert "suspicious words found" in reason
-            assert alert_class == "warning"
+            assert status == "FRAUD"
+            assert reason == "Suspicious Message"
+            assert alert_class == "danger"
 
 
 
