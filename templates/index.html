@@ -202,6 +202,23 @@
             gap:14px;
         }
 
+        .history-btn{
+            height:55px;
+            border:none;
+            border-radius:18px;
+            background:var(--card);
+            color:var(--text);
+            padding:0 18px;
+            font-weight:700;
+            border:1px solid var(--border);
+            transition:0.3s ease;
+        }
+
+        .history-btn:hover{
+            transform:translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
         .theme-btn{
             width:55px;
             height:55px;
@@ -222,7 +239,13 @@
         /* GRID */
         .grid-layout{
             display:grid;
-            grid-template-columns:1fr 1fr;
+            grid-template-columns:minmax(0, 1fr) minmax(0, 0fr);
+            gap:0;
+            transition:grid-template-columns 0.55s cubic-bezier(0.22, 1, 0.36, 1), gap 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .grid-layout.has-history{
+            grid-template-columns:minmax(0, 1fr) minmax(360px, 0.8fr);
             gap:28px;
         }
 
@@ -238,6 +261,23 @@
 
         body.light-mode .glass-card{
             background:rgba(255,255,255,0.8);
+        }
+
+        .history-card{
+            min-width:0;
+            max-height:0;
+            opacity:0;
+            overflow:hidden;
+            pointer-events:none;
+            transform:translateX(28px) scale(0.98);
+            transition:opacity 0.45s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), max-height 0.55s ease;
+        }
+
+        .history-card.show{
+            max-height:900px;
+            opacity:1;
+            pointer-events:auto;
+            transform:translateX(0) scale(1);
         }
 
         .card-header-custom{
@@ -361,71 +401,6 @@
         }
 
         /* HISTORY */
-        .result-card{
-            min-height:360px;
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-            gap:22px;
-        }
-
-        .latest-message{
-            color:var(--text2);
-            line-height:1.7;
-            word-break:break-word;
-            background:var(--card2);
-            border:1px solid var(--border);
-            border-radius:20px;
-            padding:18px;
-        }
-
-        .verdict{
-            display:flex;
-            align-items:center;
-            gap:20px;
-            border-radius:24px;
-            padding:28px;
-            color:white;
-        }
-
-        .verdict .status-icon{
-            width:70px;
-            height:70px;
-            border-radius:22px;
-            font-size:30px;
-        }
-
-        .verdict h2{
-            margin:0;
-            font-size:2.4rem;
-            font-weight:800;
-            line-height:1;
-        }
-
-        .history-toggle{
-            border:none;
-            background:var(--card2);
-            color:var(--text);
-            padding:12px 18px;
-            border-radius:16px;
-            font-weight:600;
-            border:1px solid var(--border);
-            transition:0.3s ease;
-        }
-
-        .history-toggle:hover{
-            transform:translateY(-2px);
-        }
-
-        .history-panel{
-            display:none;
-            margin-top:22px;
-        }
-
-        .history-panel.show{
-            display:block;
-        }
-
         .history-list{
             max-height:700px;
             overflow:auto;
@@ -551,6 +526,12 @@
         @media(max-width:1200px){
             .grid-layout{
                 grid-template-columns:1fr;
+                gap:0;
+            }
+
+            .grid-layout.has-history{
+                grid-template-columns:1fr;
+                gap:28px;
             }
         }
 
@@ -589,6 +570,10 @@
                 </div>
 
                 <div class="top-actions">
+                    <button class="history-btn" id="historyBtn" type="button">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        History
+                    </button>
                     <button class="theme-btn" id="themeBtn">
                         <i class="fa-solid fa-moon"></i>
                     </button>
@@ -596,7 +581,7 @@
             </div>
 
             <!-- GRID -->
-            <div class="grid-layout">
+            <div class="grid-layout {% if history %}has-history{% endif %}" id="mainGrid">
 
                 <!-- LEFT -->
                 <div class="glass-card">
@@ -631,24 +616,20 @@
                 </div>
 
                 <!-- RIGHT -->
-                <div class="glass-card">
+                <div class="glass-card history-card {% if history %}show{% endif %}" id="historyCard">
                     <div class="card-header-custom">
                         <div class="card-title">
                             <div class="icon">
-                                <i class="fa-solid fa-shield-halved"></i>
+                                <i class="fa-solid fa-clock-rotate-left"></i>
                             </div>
                             <div>
-                                <h3>Result</h3>
-                                <p>Legit or Fraud verdict</p>
+                                <h3>Latest Result</h3>
+                                <p>Last user message and result</p>
                             </div>
                         </div>
 
                         <div id="historyActions">
                             {% if history %}
-                            <button class="history-toggle" onclick="toggleHistory()" type="button" aria-label="Show analysis history">
-                                <i class="fa-solid fa-clock-rotate-left"></i>
-                                History
-                            </button>
                             <button class="clear-btn" onclick="clearHistory()" type="button" aria-label="Clear analysis history">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
@@ -657,43 +638,9 @@
                     </div>
 
                     <div class="card-body-custom">
-                        <div id="resultArea" class="result-card">
+                        <div class="history-list">
                             {% if history %}
-                                {% set latest = history[0] %}
-                                <div class="verdict
-                                    {% if latest.status == 'FRAUD' %} fraud
-                                    {% elif latest.status == 'LEGIT' %} legit
-                                    {% endif %}
-                                ">
-                                    <div class="status-icon">
-                                        {% if latest.status == 'FRAUD' %}
-                                            <i class="fa-solid fa-triangle-exclamation"></i>
-                                        {% elif latest.status == 'LEGIT' %}
-                                            <i class="fa-solid fa-circle-check"></i>
-                                        {% endif %}
-                                    </div>
-
-                                    <div>
-                                        <h2>{{ latest.status }}</h2>
-                                    </div>
-                                </div>
-
-                                <div class="latest-message">
-                                    {{ latest.text }}
-                                </div>
-                            {% else %}
-                            <div class="empty">
-                                <i class="fa-solid fa-shield-heart"></i>
-                                <h4>No Result Yet</h4>
-                                <p>Analyze a message to see LEGIT or FRAUD</p>
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <div id="historyPanel" class="history-panel">
-                            <div class="history-list">
-                                {% if history %}
-                                    {% for item in history %}
+                                {% for item in history %}
                                 <div class="history-item">
                                     <div class="history-top">
                                         <strong>#{{ loop.index }}</strong>
@@ -706,12 +653,15 @@
 
                                     <div class="status 
                                         {% if item.status == 'FRAUD' %} fraud
+                                        {% elif item.status == 'WARNING' %} warning
                                         {% elif item.status == 'LEGIT' %} legit
                                         {% endif %}
                                     ">
                                         <div class="status-icon">
                                             {% if item.status == 'FRAUD' %}
                                                 <i class="fa-solid fa-triangle-exclamation"></i>
+                                            {% elif item.status == 'WARNING' %}
+                                                <i class="fa-solid fa-circle-exclamation"></i>
                                             {% elif item.status == 'LEGIT' %}
                                                 <i class="fa-solid fa-circle-check"></i>
                                             {% endif %}
@@ -723,9 +673,14 @@
                                         </div>
                                     </div>
                                 </div>
-                                    {% endfor %}
-                                {% endif %}
+                                {% endfor %}
+                            {% else %}
+                            <div class="empty">
+                                <i class="fa-solid fa-shield-heart"></i>
+                                <h4>No Messages Yet</h4>
+                                <p>Start analyzing suspicious messages</p>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -743,6 +698,14 @@
         // =========================
         const body = document.body;
         const themeBtn = document.getElementById('themeBtn');
+        const historyBtn = document.getElementById('historyBtn');
+        const historyCard = document.getElementById('historyCard');
+        const mainGrid = document.getElementById('mainGrid');
+
+        historyBtn.addEventListener('click', ()=>{
+            historyCard.classList.toggle('show');
+            mainGrid.classList.toggle('has-history', historyCard.classList.contains('show'));
+        });
 
         if(localStorage.getItem('theme') === 'light'){
             body.classList.add('light-mode');
@@ -763,11 +726,6 @@
         // =========================
         // CLEAR HISTORY
         // =========================
-        function toggleHistory(){
-            const historyPanel = document.getElementById('historyPanel');
-            historyPanel.classList.toggle('show');
-        }
-
         function clearHistory(){
             if(confirm('Clear all history?')){
                 fetch('/clear_history', {
@@ -837,13 +795,14 @@
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
                         
-                        document.querySelector('#resultArea').innerHTML =
-                            doc.querySelector('#resultArea').innerHTML;
-                        document.querySelector('#historyPanel').innerHTML =
-                            doc.querySelector('#historyPanel').innerHTML;
-                        document.querySelector('#historyPanel').classList.remove('show');
+                        document.querySelector('.history-list').innerHTML =
+                            doc.querySelector('.history-list').innerHTML;
                         document.querySelector('#historyActions').innerHTML =
                             doc.querySelector('#historyActions').innerHTML;
+                        requestAnimationFrame(() => {
+                            mainGrid.classList.add('has-history');
+                            historyCard.classList.add('show');
+                        });
 
                         msgBox.value = ''; 
                         btn.classList.remove('scanning');

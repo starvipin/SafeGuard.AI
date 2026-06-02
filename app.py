@@ -80,7 +80,7 @@ def predict(text):
         text_lower = text.lower()
         found_keywords = [word for word in all_fraud_keywords if word in text_lower]
         if len(found_keywords) > 0:
-            return "FRAUD", "Suspicious Message", "danger"
+            return "WARNING", f"Suspicious words found: {', '.join(found_keywords)}", "warning"
         else:
             return "LEGIT", "Safe Message", "success"
     
@@ -101,7 +101,7 @@ def predict(text):
         found_keywords = [word for word in all_fraud_keywords if word in text_lower]
         
         if len(found_keywords) > 0:
-            return "FRAUD", "Suspicious Message", "danger"
+            return "WARNING", f"Model said LEGIT, but suspicious words found: {', '.join(found_keywords)}", "warning"
         else:
             return "LEGIT", "Safe Message", "success"
 
@@ -111,7 +111,8 @@ def index():
         msg = request.form.get("message", "").strip()
         if msg:
             status, reason, alert_class = predict(msg)
-            # Insert the new result at the top (index 0) of the history list
+            # Keep only the latest scan in the history backup.
+            message_history.clear()
             message_history.insert(0, {
                 "text": msg,
                 "status": status,

@@ -54,8 +54,8 @@ class TestPredictFunction:
             assert reason == "Safe Message"
             assert alert_class == "success"
 
-    def test_predict_keyword_fraud(self):
-        """Test fraud prediction with suspicious keywords."""
+    def test_predict_warning(self):
+        """Test prediction with suspicious keywords."""
         import torch
         from app import predict
 
@@ -68,9 +68,9 @@ class TestPredictFunction:
             # Test with suspicious keywords
             status, reason, alert_class = predict("Click here to update your account immediately")
 
-            assert status == "FRAUD"
-            assert reason == "Suspicious Message"
-            assert alert_class == "danger"
+            assert status == "WARNING"
+            assert "suspicious words found" in reason
+            assert alert_class == "warning"
 
 
 
@@ -83,7 +83,8 @@ class TestFlaskApp:
             'transformers': MagicMock(),
             'huggingface_hub': MagicMock()
         }):
-            from app import app as flask_app
+            from app import app as flask_app, message_history
+            message_history.clear()
         self.app = flask_app.test_client()
         self.app.testing = True
 
@@ -102,6 +103,18 @@ class TestFlaskApp:
         response = self.app.post('/', data={'message': 'Test fraud message'})
         assert response.status_code == 200
         assert b'Test fraud message' in response.data
+
+    @patch('app.predict')
+    def test_index_post_keeps_only_latest_history(self, mock_predict):
+        """Test POST request keeps only the latest message in history."""
+        mock_predict.return_value = ("LEGIT", "Safe Message", "success")
+
+        self.app.post('/', data={'message': 'First message'})
+        response = self.app.post('/', data={'message': 'Second message'})
+
+        assert response.status_code == 200
+        assert b'Second message' in response.data
+        assert b'First message' not in response.data
 
     @patch('app.predict')
     def test_clear_history(self, mock_predict):
