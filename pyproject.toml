@@ -14,7 +14,6 @@ dependencies = [
     "pyyaml>=6.0.3",
     "requests>=2.33.1",
     "scikit-learn>=1.8.0",
-    "streamlit>=1.57.0",
     "xgboost>=3.2.0",
     "torch==2.4.1+cu121",
     "torchvision==0.19.1+cu121",
