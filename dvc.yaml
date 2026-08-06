@@ -1,17 +1,19 @@
 stages:
   data_ingestion:
-    cmd: python src/stage_01_get_data.py
+    cmd: python -m src.safeguard_ai.ml.ingestion
     deps:
-      - src/stage_01_get_data.py
+      - src/safeguard_ai/ml/common.py
+      - src/safeguard_ai/ml/ingestion.py
       - params.yaml
       - data/raw_data/fraud_dataset.csv
     outs:
       - data/raw_data/dataset.csv
 
   training:
-    cmd: python src/stage_02_train.py
+    cmd: python -m src.safeguard_ai.ml.training
     deps:
-      - src/stage_02_train.py
+      - src/safeguard_ai/ml/common.py
+      - src/safeguard_ai/ml/training.py
       - data/raw_data/dataset.csv
     params:
       - train.learning_rate
@@ -24,9 +26,10 @@ stages:
       - models/fraud_model_final
 
   evaluation:
-    cmd: python src/stage_03_evaluate.py
+    cmd: python -m src.safeguard_ai.ml.evaluation
     deps:
-      - src/stage_03_evaluate.py
+      - src/safeguard_ai/ml/common.py
+      - src/safeguard_ai/ml/evaluation.py
       - models/fraud_model_final
       - data/raw_data/dataset.csv
     metrics:

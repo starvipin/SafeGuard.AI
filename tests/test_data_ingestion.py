@@ -1,109 +1,72 @@
-import pytest
-import os
-import tempfile
-import shutil
+from pathlib import Path
+
 import pandas as pd
-from unittest.mock import patch
+import pytest
+import yaml
 
-# Add src to path
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+from src.safeguard_ai.ml.common import load_config, read_dataset
+from src.safeguard_ai.ml.ingestion import ingest_data
+from src.stage_01_get_data import get_data
 
-from stage_01_get_data import read_params, get_data
 
-class TestReadParams:
-    """Test parameter reading functionality"""
+def write_config(path: Path, source: Path, target_dir: Path, name="dataset.csv") -> Path:
+    path.write_text(
+        yaml.safe_dump(
+            {
+                "data_source": {
+                    "local_path": str(source),
+                    "raw_data_dir": str(target_dir),
+                    "dataset_name": name,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
 
-    def test_read_params_valid(self, temp_config):
-        """Test reading valid config file."""
-        config = read_params(temp_config)
-        assert isinstance(config, dict)
-        assert 'data_source' in config
-        assert 'raw_data_dir' in config['data_source']
 
-    def test_read_params_invalid_file(self):
-        """Test reading non-existent config file."""
-        with pytest.raises(FileNotFoundError):
-            read_params("non_existent.yaml")
+def test_load_config(temp_config):
+    config = load_config(temp_config)
+    assert config["data_source"]["dataset_name"] == "dataset.csv"
 
-class TestGetData:
-    """Test data ingestion functionality"""
 
-    def setup_method(self):
-        """Setup temporary directories."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.raw_data_dir = os.path.join(self.temp_dir, "data", "raw_data")
-        os.makedirs(self.raw_data_dir, exist_ok=True)
+def test_ingest_data_copies_csv(tmp_path):
+    source = tmp_path / "source.csv"
+    pd.DataFrame({"text": ["hello", "claim now"], "label": [0, 1]}).to_csv(
+        source, index=False
+    )
+    target_dir = tmp_path / "pipeline-data"
+    config_path = write_config(tmp_path / "params.yaml", source, target_dir)
 
-    def teardown_method(self):
-        """Cleanup temporary directories."""
-        shutil.rmtree(self.temp_dir)
+    target = ingest_data(config_path)
 
-    def test_get_data_success(self, temp_config):
-        """Test successful data ingestion."""
-        # Create sample source data as CSV
-        source_path = os.path.join(self.temp_dir, "sample_data.csv")
-        sample_data = pd.DataFrame({
-            'text': ['test message 1', 'test message 2'],
-            'label': [0, 1]
-        })
-        sample_data.to_csv(source_path, index=False)
+    assert target == target_dir / "dataset.csv"
+    assert read_dataset(target).to_dict("list") == {
+        "text": ["hello", "claim now"],
+        "label": [0, 1],
+    }
 
-        # Modify config to use temp paths
-        import yaml
-        with open(temp_config, 'r') as f:
-            config = yaml.safe_load(f)
 
-        config['data_source']['local_path'] = source_path
-        config['data_source']['raw_data_dir'] = self.raw_data_dir
+def test_ingest_data_raises_for_missing_source(tmp_path):
+    config_path = write_config(
+        tmp_path / "params.yaml", tmp_path / "missing.csv", tmp_path / "data"
+    )
+    with pytest.raises(FileNotFoundError, match="Source dataset not found"):
+        ingest_data(config_path)
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump(config, f)
-            test_config = f.name
 
-        try:
-            # Run get_data
-            get_data(test_config)
+def test_legacy_entrypoint_reports_missing_source(tmp_path, capsys):
+    config_path = write_config(
+        tmp_path / "params.yaml", tmp_path / "missing.csv", tmp_path / "data"
+    )
+    assert get_data(config_path) is None
+    assert "Stage 01 failed" in capsys.readouterr().out
 
-            # Check if target file exists
-            target_path = os.path.join(self.raw_data_dir, "dataset.csv")
-            assert os.path.exists(target_path)
 
-            # Check content
-            df = pd.read_csv(target_path)
-            assert len(df) == 2
-            assert list(df.columns) == ['text', 'label']
-
-        finally:
-            os.unlink(test_config)
-
-    def test_get_data_source_not_found(self, temp_config):
-        """Test data ingestion when source file doesn't exist."""
-        # Modify config to use non-existent source
-        import yaml
-        with open(temp_config, 'r') as f:
-            config = yaml.safe_load(f)
-
-        config['data_source']['local_path'] = "non_existent.csv"
-        config['data_source']['raw_data_dir'] = self.raw_data_dir
-
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump(config, f)
-            test_config = f.name
-
-        try:
-            # Run get_data - should not raise error but print message
-            get_data(test_config)
-
-            # Target file should not exist
-            target_path = os.path.join(self.raw_data_dir, "dataset.csv")
-            assert not os.path.exists(target_path)
-
-        finally:
-            os.unlink(test_config)
-
-    @patch('os.makedirs')
-    def test_get_data_creates_directories(self, mock_makedirs, temp_config):
-        """Test that directories are created."""
-        get_data(temp_config)
-        mock_makedirs.assert_called()
+def test_dataset_validation_rejects_invalid_labels(tmp_path):
+    dataset = tmp_path / "dataset.csv"
+    pd.DataFrame({"text": ["one", "two"], "label": [0, 9]}).to_csv(
+        dataset, index=False
+    )
+    with pytest.raises(ValueError, match="Labels must contain only"):
+        read_dataset(dataset)

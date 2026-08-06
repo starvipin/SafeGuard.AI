@@ -1,7 +1,7 @@
 [project]
 name = "SafeGuard.AI"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-assisted fraud-message detection with an explainable Flask interface"
 readme = "README.md"
 requires-python = ">=3.12" 
 

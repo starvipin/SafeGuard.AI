@@ -1,156 +1,149 @@
 ---
 title: SafeGuard AI
 emoji: 🛡️
-colorFrom: blue
-colorTo: green
+colorFrom: green
+colorTo: blue
 sdk: docker
 app_port: 5000
 ---
 
 # SafeGuard AI
 
-SafeGuard AI is a Flask web app that checks suspicious messages using a DistilBERT fraud classifier plus a keyword fallback. It includes a responsive UI, in-memory analysis history, a clear-history action, tests, and a DVC-friendly ML pipeline.
+SafeGuard AI is an explainable fraud-message scanner. It combines a fine-tuned DistilBERT classifier with a deterministic phrase check, so the app remains useful when the model is unavailable and can explain risky signals to the user.
 
-## Features
+## Highlights
 
-- DistilBERT-based fraud/legit classification
-- Keyword fallback when the model is unavailable or returns legit with suspicious terms
-- AJAX message analysis without a full page refresh
-- History panel with clear-history button
-- Lazy model loading so imports and tests stay fast
-- CSV-based data ingestion, training, and evaluation pipeline
-- Pytest test suite and GitHub Actions workflows
+- Lazy model loading keeps startup and health checks fast.
+- Hybrid verdicts distinguish model, keyword, and combined results.
+- Responsive, accessible interface with dark/light themes and no artificial scan delay.
+- Versioned JSON API for integrations.
+- Bounded, thread-safe in-memory history.
+- Reusable ingestion, training, evaluation, metrics, and Hugging Face publishing modules.
+- Strict pytest CI and DVC-compatible ML stages.
 
-## Project Structure
+## Architecture
 
 ```text
 SafeGuard.AI/
-├── app.py
-├── main.py
-├── params.yaml
-├── pyproject.toml
-├── uv.lock
-├── dvc.yaml
-├── metrics.json
+├── app.py                         # WSGI/deployment entrypoint
+├── main.py                        # Local development entrypoint
 ├── src/
-│   ├── stage_01_get_data.py
-│   ├── stage_02_train.py
-│   ├── stage_03_evaluate.py
-│   └── upload_to_hf.py
-├── templates/
-│   └── index.html
-├── tests/
-└── .github/workflows/
+│   └── safeguard_ai/
+│       ├── __init__.py            # Flask application factory
+│       ├── config.py              # Environment-driven configuration
+│       ├── domain.py              # Typed domain results
+│       ├── services/
+│       │   ├── detector.py        # Model lifecycle + hybrid detection
+│       │   └── history.py         # Thread-safe bounded history
+│       ├── web/
+│       │   └── routes.py          # HTML, JSON API, and health routes
+│       └── ml/
+│           ├── common.py          # Dataset/config/metrics utilities
+│           ├── ingestion.py
+│           ├── training.py
+│           ├── evaluation.py
+│           └── hub.py
+├── static/                        # Versioned CSS and JavaScript
+├── templates/                     # Jinja templates
+├── tests/                         # Unit and integration tests
+├── params.yaml                    # ML pipeline configuration
+└── dvc.yaml                       # Reproducible pipeline stages
 ```
 
-Local datasets, downloaded models, virtual environments, caches, and secrets are ignored by Git.
+The root entrypoint creates the Flask app through an application factory. Routes depend on services registered in `app.extensions`, keeping HTTP concerns separate from detection and state management. ML stages reuse validated I/O and metric helpers instead of duplicating pipeline code.
 
-## Quick Start
+## Quick start
 
-Prerequisites:
-
-- Python 3.12+
-- uv
-
-Install dependencies:
+Prerequisites: Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-uv sync
-```
-
-Run the app:
-
-```bash
+uv sync --frozen
 uv run python app.py
 ```
 
-Open:
+Open `http://localhost:5000`.
 
-```text
-http://localhost:5000
-```
+The app downloads `sainivipin/fraud-model-final` on the first real analysis if the model is not already present. If loading fails, the scanner safely falls back to its phrase detector.
 
-## Testing
+## API
 
-Run all tests:
+Analyze a message:
 
 ```bash
-uv run --frozen pytest tests
+curl -X POST http://localhost:5000/api/v1/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Verify your account immediately"}'
 ```
 
-Current verified result:
+Example response:
 
-```text
-19 passed
+```json
+{
+  "alert_class": "warning",
+  "confidence": null,
+  "reason": "Suspicious phrases found: immediately, account",
+  "source": "keywords",
+  "status": "WARNING",
+  "text": "Verify your account immediately"
+}
 ```
 
-## ML Pipeline
+Other endpoints:
 
-The pipeline is configured in `dvc.yaml` and `params.yaml`.
-
-Stage 01 ingests data:
-
-```bash
-uv run python src/stage_01_get_data.py
-```
-
-It reads `data/raw_data/fraud_dataset.csv` and writes the canonical pipeline dataset to `data/raw_data/dataset.csv`.
-
-Stage 02 trains the model:
-
-```bash
-uv run python src/stage_02_train.py
-```
-
-It trains DistilBERT and saves the final model to `models/fraud_model_final`. If `HF_TOKEN` is available, it uploads the model through `src/upload_to_hf.py`; otherwise upload is skipped.
-
-Stage 03 evaluates the model:
-
-```bash
-uv run python src/stage_03_evaluate.py
-```
-
-It loads `models/fraud_model_final`, evaluates on the held-out split, and writes `metrics.json`.
-
-Run the full DVC pipeline if DVC is installed:
-
-```bash
-uv run dvc repro
-```
+- `GET /` — web interface
+- `GET /health` — lightweight service health
+- `POST /clear_history` — clear current process history
 
 ## Configuration
 
-```yaml
-data_source:
-  local_path: data/raw_data/fraud_dataset.csv
-  raw_data_dir: data/raw_data
-  dataset_name: dataset.csv
+Runtime settings are read from environment variables:
 
-train:
-  model_name: distilbert-base-uncased
-  model_output_dir: models/fraud_model_final
-  batch_size: 4
-  epochs: 3
-  learning_rate: 5e-5
-  save_steps: 500
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `HOST` | `0.0.0.0` | Web bind address |
+| `PORT` | `5000` | Web port |
+| `FLASK_DEBUG` | `false` | Development debug mode |
+| `HF_MODEL_REPO` | `sainivipin/fraud-model-final` | Model repository |
+| `MODEL_DIR` | `models/fraud_model_final` | Local model directory |
+| `HISTORY_LIMIT` | `10` | Maximum recent results |
+| `HF_TOKEN` | unset | Optional model publishing token |
+
+Never commit `.env` or access tokens.
+
+## Testing
+
+```bash
+uv run --frozen pytest -q
 ```
 
-## App Routes
+Verified after the architecture refactor: `20 passed`.
 
-- `GET /` renders the UI and history
-- `POST /` analyzes a submitted message
-- `POST /clear_history` clears in-memory history
+## ML pipeline
 
-## Recent Updates
+If DVC is installed, run the full pipeline from the synced project environment:
 
-- Fixed the history delete button so it appears immediately after AJAX analysis, without refreshing the page.
-- Moved app model loading to lazy loading.
-- Aligned ingestion, training, evaluation, and DVC paths around the DistilBERT model flow.
-- Removed the duplicate root Hugging Face upload script; `src/upload_to_hf.py` is the maintained version.
-- Removed the direct `pyarrow` dependency and kept the pipeline CSV-based for local Windows stability.
+```bash
+dvc repro
+```
 
-## Notes
+Or run individual modules:
 
-- History is stored in memory and clears when the server restarts.
-- Production deployments should configure HTTPS and secure secret handling.
-- The model directory and raw data are intentionally ignored because they can be large or environment-specific.
+```bash
+uv run python -m src.safeguard_ai.ml.ingestion
+uv run python -m src.safeguard_ai.ml.training
+uv run python -m src.safeguard_ai.ml.evaluation
+```
+
+The local source dataset is expected at `data/raw_data/fraud_dataset.csv`; generated data and model artifacts remain outside Git.
+
+To explicitly publish a trained model:
+
+```bash
+HF_TOKEN=... uv run python src/upload_to_hf.py
+```
+
+## Production notes
+
+- Run behind HTTPS and a production WSGI server.
+- The bundled history store is process-local; use Redis or a database for shared multi-worker history.
+- Treat the verdict as decision support. Users should independently verify payment, credential, and account-security requests.
