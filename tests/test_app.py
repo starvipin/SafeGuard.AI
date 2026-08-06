@@ -1,133 +1,101 @@
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-import sys
-import os
 
-# Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
-import torch
-from unittest.mock import patch, MagicMock
-with patch.dict('sys.modules', {
-    'transformers': MagicMock(),
-    'huggingface_hub': MagicMock()
-}):
-    from app import predict
-
-class TestPredictFunction:
-    """Test the predict function from app.py"""
-
-    def test_predict_fraud(self):
-        """Test prediction of fraud message."""
-        import torch
-        from app import predict
-
-        with patch('app.tokenizer') as mock_tokenizer, \
-             patch('app.model') as mock_model:
-            
-            mock_tokenizer.return_value = {'input_ids': torch.tensor([[1, 2, 3]]), 'attention_mask': torch.tensor([[1, 1, 1]])}
-            mock_model.return_value.logits = torch.tensor([[0.1, 0.9]])
-
-            # Test fraud prediction
-            status, reason, alert_class = predict("Fake lottery win message")
-
-            assert status == "FRAUD"
-            assert "AI Model" in reason
-            assert alert_class == "danger"
-
-    def test_predict_legit(self):
-        """Test prediction of legitimate message."""
-        import torch
-        from app import predict
-
-        with patch('app.tokenizer') as mock_tokenizer, \
-             patch('app.model') as mock_model:
-             
-            mock_tokenizer.return_value = {'input_ids': torch.tensor([[1, 2, 3]]), 'attention_mask': torch.tensor([[1, 1, 1]])}
-            mock_model.return_value.logits = torch.tensor([[0.9, 0.1]])
-
-            # Test legit prediction
-            status, reason, alert_class = predict("Hello, how are you?")
-
-            assert status == "LEGIT"
-            assert reason == "Safe Message"
-            assert alert_class == "success"
-
-    def test_predict_warning(self):
-        """Test prediction with suspicious keywords."""
-        import torch
-        from app import predict
-
-        with patch('app.tokenizer') as mock_tokenizer, \
-             patch('app.model') as mock_model:
-
-            mock_tokenizer.return_value = {'input_ids': torch.tensor([[1, 2, 3]]), 'attention_mask': torch.tensor([[1, 1, 1]])}
-            mock_model.return_value.logits = torch.tensor([[0.9, 0.1]])
-
-            # Test with suspicious keywords
-            status, reason, alert_class = predict("Click here to update your account immediately")
-
-            assert status == "WARNING"
-            assert "suspicious words found" in reason
-            assert alert_class == "warning"
+from src.safeguard_ai import create_app
+from src.safeguard_ai.domain import Prediction
+from src.safeguard_ai.services.detector import FraudDetector
 
 
+@pytest.fixture
+def application():
+    return create_app({"TESTING": True, "HISTORY_LIMIT": 2})
 
-class TestFlaskApp:
-    """Test Flask application routes"""
 
-    def setup_method(self, method):
-        """Setup test client."""
-        with patch.dict('sys.modules', {
-            'transformers': MagicMock(),
-            'huggingface_hub': MagicMock()
-        }):
-            from app import app as flask_app, message_history
-            message_history.clear()
-        self.app = flask_app.test_client()
-        self.app.testing = True
+@pytest.fixture
+def client(application):
+    return application.test_client()
 
-    @patch('app.predict')
-    def test_index_get(self, mock_predict):
-        """Test GET request to index."""
-        response = self.app.get('/')
+
+class TestFraudDetector:
+    def test_keyword_fallback_warns_for_risky_message(self, tmp_path):
+        detector = FraudDetector(tmp_path, "owner/model", "model.safetensors")
+        with patch.object(detector, "load_model", return_value=False):
+            result = detector.predict("Click here to update your account immediately")
+
+        assert result.status == "WARNING"
+        assert result.source == "keywords"
+        assert "click here" in result.reason
+
+    def test_keyword_fallback_accepts_safe_message(self, tmp_path):
+        detector = FraudDetector(tmp_path, "owner/model", "model.safetensors")
+        with patch.object(detector, "load_model", return_value=False):
+            result = detector.predict("Hello, how are you?")
+
+        assert result == Prediction(
+            status="LEGIT",
+            reason="No suspicious phrase detected (keyword scan)",
+            alert_class="success",
+            source="keywords",
+        )
+
+    def test_empty_message_is_rejected(self, tmp_path):
+        detector = FraudDetector(tmp_path, "owner/model", "model.safetensors")
+        with pytest.raises(ValueError, match="cannot be empty"):
+            detector.predict("   ")
+
+
+class TestWebApplication:
+    def test_index_renders(self, client):
+        response = client.get("/")
         assert response.status_code == 200
-        assert b'SafeGuard AI' in response.data
+        assert b"SafeGuard AI" in response.data
 
-    @patch('app.predict')
-    def test_index_post(self, mock_predict):
-        """Test POST request to index with message."""
-        mock_predict.return_value = ("FRAUD", "Detected by AI", "danger")
-
-        response = self.app.post('/', data={'message': 'Test fraud message'})
-        assert response.status_code == 200
-        assert b'Test fraud message' in response.data
-
-    @patch('app.predict')
-    def test_index_post_keeps_only_latest_history(self, mock_predict):
-        """Test POST request keeps only the latest message in history."""
-        mock_predict.return_value = ("LEGIT", "Safe Message", "success")
-
-        self.app.post('/', data={'message': 'First message'})
-        response = self.app.post('/', data={'message': 'Second message'})
+    def test_form_analysis_adds_history(self, client, application):
+        detector = application.extensions["fraud_detector"]
+        with patch.object(
+            detector,
+            "predict",
+            return_value=Prediction("FRAUD", "Detected by AI", "danger", "model", 0.98),
+        ):
+            response = client.post("/", data={"message": "Test fraud message"})
 
         assert response.status_code == 200
-        assert b'Second message' in response.data
-        assert b'First message' not in response.data
+        assert b"Test fraud message" in response.data
 
-    @patch('app.predict')
-    def test_clear_history(self, mock_predict):
-        """Test clear history functionality."""
-        # First add a message
-        mock_predict.return_value = ("FRAUD", "Detected", "danger")
-        self.app.post('/', data={'message': 'Test message'})
+    def test_json_api_validates_and_analyzes(self, client, application):
+        empty_response = client.post("/api/v1/analyze", json={"message": " "})
+        assert empty_response.status_code == 400
 
-        # Clear history
-        response = self.app.post('/clear_history')
-        assert response.status_code == 302  # Redirect
+        detector = application.extensions["fraud_detector"]
+        with patch.object(
+            detector,
+            "predict",
+            return_value=Prediction("LEGIT", "Safe", "success", "model", 0.91),
+        ):
+            response = client.post("/api/v1/analyze", json={"message": "Team lunch at noon"})
 
-        # Check history is cleared
-        response = self.app.get('/')
-        # Should not contain the test message anymore
-        assert b'Test message' not in response.data
+        assert response.status_code == 200
+        assert response.get_json()["status"] == "LEGIT"
+
+    def test_history_is_bounded_and_can_be_cleared(self, client, application):
+        detector = application.extensions["fraud_detector"]
+        with patch.object(
+            detector,
+            "predict",
+            return_value=Prediction("LEGIT", "Safe", "success", "keywords"),
+        ):
+            for message in ("First", "Second", "Third"):
+                client.post("/api/v1/analyze", json={"message": message})
+
+        history = application.extensions["analysis_history"].snapshot()
+        assert [item["text"] for item in history] == ["Third", "Second"]
+
+        response = client.post("/clear_history", headers={"Accept": "application/json"})
+        assert response.status_code == 200
+        assert application.extensions["analysis_history"].snapshot() == []
+
+    def test_health_does_not_load_model(self, client):
+        response = client.get("/health")
+        assert response.status_code == 200
+        assert response.get_json()["model_loaded"] is False

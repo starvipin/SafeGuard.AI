@@ -1,132 +1,27 @@
-from flask import Flask, render_template, request, redirect
+"""WSGI entrypoint for SafeGuard AI.
 
-import torch
-from transformers import DistilBertTokenizerFast, DistilBertForSequenceClassification
-import os
-from huggingface_hub import snapshot_download
-from dotenv import load_dotenv
+The application implementation lives in ``src.safeguard_ai``. Keeping this
+small module makes local execution, Docker, and WSGI servers use the same app.
+"""
 
-load_dotenv()
+from src.safeguard_ai import create_app
 
-# Hugging Face Hub config
-HF_USERNAME = "sainivipin"
-MODEL_REPO = "fraud-model-final"
-MODEL_FILENAME = "model.safetensors"
-MODEL_DIR = "models/fraud_model_final"
 
-app = Flask(__name__)
+app = create_app()
 
-tokenizer = None
-model = None
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_load_attempted = False
 
-all_fraud_keywords = [
-    "immediately", "24 hours", "tonight", "blocked", "suspended", "asap", 
-    "click here", "update kyc", "verify now", "call this number", "log in", "link below",
-    "lottery", "cashback", "winner", "work from home", "easy money", 
-    "prize", "bonus", "gift", "claim now","account", 
-    "police", "arrest", "fir", "court case", "legal notice", "warrant", 
-    "seized", "customs", "disconnected", "terminated", "jail",
-    "income tax", "rbi", "govt", "support team", "admin", "manager", 
-    "ceo", "officer", "cbi", "narcotics",
-    "unusual login", "device detected", "password changed", "security alert", 
-    "unauthorized access", "validation code", "otp", "reset pin", "account frozen",
-    "limited time", "expires today", "last chance", "offer ends", "urgent attention",
-    "wire transfer", "refund", "credit", "debit", "pending transaction", 
-    "invoice", "bill payment", "processing fee", "bitcoin", "wallet address","wallet",
-]
+def predict(text: str) -> tuple[str, str, str]:
+    """Compatibility helper for callers that used the original module API."""
+    return app.extensions["fraud_detector"].predict(text).as_tuple()
 
-# A list to store history
-message_history = []
 
-def load_model():
-    global tokenizer, model, model_load_attempted
+# Compatibility alias for the original public module attribute.
+message_history = app.extensions["analysis_history"].items
 
-    if model is not None and tokenizer is not None:
-        return True
-
-    if model_load_attempted:
-        return False
-
-    model_load_attempted = True
-    model_path = os.path.join(MODEL_DIR, MODEL_FILENAME)
-
-    try:
-        if not os.path.exists(model_path):
-            os.makedirs(MODEL_DIR, exist_ok=True)
-            print("Downloading model from Hugging Face Hub...")
-            snapshot_download(repo_id=f"{HF_USERNAME}/{MODEL_REPO}", local_dir=MODEL_DIR)
-            print(f"Model downloaded to {MODEL_DIR}")
-
-        print("Loading model and tokenizer...")
-        tokenizer = DistilBertTokenizerFast.from_pretrained(MODEL_DIR)
-        model = DistilBertForSequenceClassification.from_pretrained(MODEL_DIR)
-        model.to(device)
-        model.eval()
-        print(f"Model loaded successfully on {device}!")
-        return True
-    except Exception as exc:
-        print(f"Model unavailable, using keyword fallback. Reason: {exc}")
-        tokenizer = None
-        model = None
-        return False
-
-def predict(text):
-    load_model()
-
-    if model is None or tokenizer is None:
-        # Fallback to keyword-based detection if model not loaded
-        text_lower = text.lower()
-        found_keywords = [word for word in all_fraud_keywords if word in text_lower]
-        if len(found_keywords) > 0:
-            return "WARNING", f"Suspicious words found: {', '.join(found_keywords)}", "warning"
-        else:
-            return "LEGIT", "Safe Message", "success"
-    
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-    inputs = {k: v.to(device) for k, v in inputs.items()}
-
-    with torch.no_grad():
-        outputs = model(**inputs)
-
-    probs = torch.softmax(outputs.logits, dim=1)
-    label = torch.argmax(probs).item()
-    print("DEBUG LABEL:", label, type(label))
-
-    if label == 1:
-        return "FRAUD", "Detected by AI Model", "danger"
-    else:
-        text_lower = text.lower()
-        found_keywords = [word for word in all_fraud_keywords if word in text_lower]
-        
-        if len(found_keywords) > 0:
-            return "WARNING", f"Model said LEGIT, but suspicious words found: {', '.join(found_keywords)}", "warning"
-        else:
-            return "LEGIT", "Safe Message", "success"
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    if request.method == "POST":
-        msg = request.form.get("message", "").strip()
-        if msg:
-            status, reason, alert_class = predict(msg)
-            # Keep only the latest scan in the history backup.
-            message_history.clear()
-            message_history.insert(0, {
-                "text": msg,
-                "status": status,
-                "reason": reason,
-                "alert_class": alert_class
-            })
-
-    # Sending history to the template
-    return render_template("index.html", history=message_history)
-
-@app.route("/clear_history", methods=["POST"])
-def clear_history():
-    message_history.clear()
-    return redirect("/")
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(
+        debug=app.config["DEBUG"],
+        host=app.config["HOST"],
+        port=app.config["PORT"],
+    )
