@@ -1,6 +1,7 @@
 name: Sync to Hugging Face Docker Space
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main  
@@ -10,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true # large file
