@@ -31,14 +31,6 @@ messageInput.addEventListener("keydown", (event) => {
     }
 });
 
-document.querySelectorAll("[data-example]").forEach((button) => {
-    button.addEventListener("click", () => {
-        messageInput.value = button.dataset.example;
-        updateCharacterCount();
-        messageInput.focus();
-    });
-});
-
 function resultCard(result) {
     const article = document.createElement("article");
     article.className = `result-card result-${result.alert_class}`;

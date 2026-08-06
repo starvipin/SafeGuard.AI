@@ -136,13 +136,11 @@ textarea { display: block; width: 100%; min-height: 225px; padding: 20px; resize
 textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent); }
 .input-meta { display: flex; justify-content: space-between; padding: 11px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.72rem; }
 
-.examples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 20px; color: var(--muted); font-size: 0.76rem; }
-.examples button, .text-button { border: 0; background: transparent; color: var(--accent); font-weight: 700; }
-.examples button { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; }
-.examples button:hover { background: var(--surface-raised); }
+.text-button { border: 0; background: transparent; color: var(--accent); font-weight: 700; }
 
 .primary-button {
     display: flex;
+    margin-top: 20px;
     width: 100%;
     min-height: 54px;
     align-items: center;
