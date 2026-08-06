@@ -1,843 +1,122 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>SafeGuard.AI</title>
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-
-    <!-- Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <style>
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-        }
-
-        :root{
-            /* DARK */
-            --bg:#060816;
-            --card:#0d1325;
-            --card2:#121a31;
-            --text:#ffffff;
-            --text2:#a5b4d4;
-            --border:rgba(255,255,255,0.08);
-
-            --primary:#7c3aed;
-            --primary2:#4f46e5;
-
-            --success:#10b981;
-            --warning:#f59e0b;
-            --danger:#ef4444;
-
-            --shadow:0 20px 60px rgba(0,0,0,0.45);
-        }
-
-        body.light-mode{
-            --bg:#eef2ff;
-            --card:#ffffff;
-            --card2:#f8faff;
-            --text:#0f172a;
-            --text2:#64748b;
-            --border:rgba(15,23,42,0.08);
-            --shadow:0 15px 40px rgba(15,23,42,0.08);
-        }
-
-        body{
-            font-family:'Outfit',sans-serif;
-            background:var(--bg);
-            color:var(--text);
-            min-height:100vh;
-            overflow-x:hidden;
-            transition:0.3s ease;
-        }
-
-        /* BACKGROUND GLOW */
-        .bg-glow{
-            position:fixed;
-            width:700px;
-            height:700px;
-            border-radius:50%;
-            filter:blur(120px);
-            z-index:-1;
-            opacity:0.35;
-        }
-
-        .glow1{
-            background:#7c3aed;
-            top:-200px;
-            left:-150px;
-        }
-
-        .glow2{
-            background:#2563eb;
-            bottom:-250px;
-            right:-150px;
-        }
-
-        /* MAIN */
-        .main-container{
-            width:100%;
-            min-height:100vh;
-            padding:28px;
-        }
-
-        .dashboard{
-            max-width:1600px;
-            margin:auto;
-        }
-
-        /* NAVBAR */
-        .topbar{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:28px;
-            gap:20px;
-            flex-wrap:wrap;
-        }
-
-        .brand{
-            display:flex;
-            align-items:center;
-            gap:18px;
-        }
-
-        .logo{
-            width:72px;
-            height:72px;
-            border-radius:24px;
-            background:linear-gradient(135deg, var(--primary), var(--primary2));
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:30px;
-            color:white;
-            box-shadow: 0 10px 35px rgba(124,58,237,0.5);
-            position: relative; 
-            z-index: 1;
-        }
-
-        /* PREMIUM SONAR PULSE EFFECT */
-        .logo::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 24px;
-            border: 2px solid var(--primary);
-            z-index: -1;
-            animation: sonar-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-
-        @keyframes sonar-pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.45); opacity: 0; }
-        }
-
-        /* GENTLE FLOAT FOR THE SHIELD ICON */
-        .logo i {
-            animation: float-icon 3s ease-in-out infinite;
-            text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
-        }
-
-        @keyframes float-icon {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-2px) scale(1.05); }
-        }
-
-        /* FUTURISTIC TITLE EFFECT */
-        .brand-text h1{
-            font-size:2.2rem;
-            font-weight:800;
-            margin:0;
-            background: linear-gradient(90deg, #7c3aed, #06b6d4, #7c3aed);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            color: transparent;
-            animation: holographic-shine 3s linear infinite;
-            text-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
-        }
-
-        @keyframes holographic-shine {
-            to { background-position: 200% center; }
-        }
-
-        /* ACTIVE TERMINAL DOT ON SUBTITLE */
-        .brand-text p{
-            margin-top:4px;
-            color:var(--text2);
-            font-size:1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .brand-text p::after {
-            content: '';
-            width: 8px;
-            height: 8px;
-            background-color: #10b981;
-            border-radius: 50%;
-            animation: blink 1.2s infinite;
-            box-shadow: 0 0 10px #10b981, 0 0 15px #10b981;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.3; transform: scale(0.8); }
-        }
-
-        .top-actions{
-            display:flex;
-            align-items:center;
-            gap:14px;
-        }
-
-        .history-btn{
-            height:55px;
-            border:none;
-            border-radius:18px;
-            background:var(--card);
-            color:var(--text);
-            padding:0 18px;
-            font-weight:700;
-            border:1px solid var(--border);
-            transition:0.3s ease;
-        }
-
-        .history-btn:hover{
-            transform:translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-
-        .theme-btn{
-            width:55px;
-            height:55px;
-            border:none;
-            border-radius:18px;
-            background:var(--card);
-            color:var(--text);
-            font-size:20px;
-            border:1px solid var(--border);
-            transition:0.3s ease;
-        }
-
-        .theme-btn:hover{
-            transform:translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-
-        /* GRID */
-        .grid-layout{
-            display:grid;
-            grid-template-columns:minmax(0, 1fr) minmax(0, 0fr);
-            gap:0;
-            transition:grid-template-columns 0.55s cubic-bezier(0.22, 1, 0.36, 1), gap 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .grid-layout.has-history{
-            grid-template-columns:minmax(0, 1fr) minmax(360px, 0.8fr);
-            gap:28px;
-        }
-
-        /* CARD */
-        .glass-card{
-            background:rgba(255,255,255,0.03);
-            backdrop-filter:blur(20px);
-            border:1px solid var(--border);
-            border-radius:30px;
-            overflow:hidden;
-            box-shadow:var(--shadow);
-        }
-
-        body.light-mode .glass-card{
-            background:rgba(255,255,255,0.8);
-        }
-
-        .history-card{
-            min-width:0;
-            max-height:0;
-            opacity:0;
-            overflow:hidden;
-            pointer-events:none;
-            transform:translateX(28px) scale(0.98);
-            transition:opacity 0.45s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), max-height 0.55s ease;
-        }
-
-        .history-card.show{
-            max-height:900px;
-            opacity:1;
-            pointer-events:auto;
-            transform:translateX(0) scale(1);
-        }
-
-        .card-header-custom{
-            padding:26px 28px;
-            border-bottom:1px solid var(--border);
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
-
-        .card-title{
-            display:flex;
-            align-items:center;
-            gap:14px;
-        }
-
-        .card-title .icon{
-            width:48px;
-            height:48px;
-            border-radius:16px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            background:linear-gradient(135deg, var(--primary), var(--primary2));
-            color:white;
-            font-size:20px;
-        }
-
-        .card-title h3{
-            margin:0;
-            font-size:1.3rem;
-            font-weight:700;
-        }
-
-        .card-title p{
-            margin:2px 0 0;
-            color:var(--text2);
-            font-size:0.92rem;
-        }
-
-        .card-body-custom{
-            padding:28px;
-        }
-
-        /* TEXTAREA */
-        .message-box{
-            width:100%;
-            min-height:280px;
-            border:none;
-            outline:none;
-            resize:none;
-            border-radius:24px;
-            background:var(--card2);
-            color:var(--text);
-            padding:24px;
-            font-size:1rem;
-            line-height:1.7;
-            border:1px solid transparent;
-            transition:0.3s ease;
-        }
-
-        .message-box:focus{
-            border:1px solid rgba(124,58,237,0.5);
-            box-shadow: 0 0 0 5px rgba(124,58,237,0.15);
-        }
-
-        .message-box::placeholder{
-            color:#94a3b8;
-        }
-
-        /* BUTTON */
-        .analyze-btn{
-            width:100%;
-            margin-top:22px;
-            border:none;
-            border-radius:22px;
-            padding:18px;
-            font-size:1rem;
-            font-weight:700;
-            color:white;
-            background:linear-gradient(135deg, var(--primary), var(--primary2));
-            transition:0.3s ease;
-            box-shadow: 0 12px 35px rgba(124,58,237,0.4);
-        }
-
-        .analyze-btn:hover{
-            transform:translateY(-3px);
-        }
-
-        /* AI SCANNING EFFECTS */
-        .analyze-btn.scanning {
-            background: linear-gradient(270deg, var(--primary), #06b6d4, var(--primary2), var(--primary));
-            background-size: 300% 300%;
-            animation: ai-gradient-shift 2s ease infinite, ai-pulse-glow 1.5s infinite;
-            cursor: not-allowed;
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-        }
-
-        .message-box.scanning {
-            border: 1px solid var(--primary);
-            animation: text-box-pulse 1.5s infinite;
-        }
-
-        @keyframes ai-gradient-shift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        @keyframes ai-pulse-glow {
-            0% { box-shadow: 0 0 15px rgba(124, 58, 237, 0.5); }
-            50% { box-shadow: 0 0 35px rgba(6, 182, 212, 0.8), 0 0 15px rgba(124, 58, 237, 0.6); }
-            100% { box-shadow: 0 0 15px rgba(124, 58, 237, 0.5); }
-        }
-
-        @keyframes text-box-pulse {
-            0% { box-shadow: inset 0 0 10px rgba(124, 58, 237, 0.1); }
-            50% { box-shadow: inset 0 0 30px rgba(124, 58, 237, 0.3); }
-            100% { box-shadow: inset 0 0 10px rgba(124, 58, 237, 0.1); }
-        }
-
-        /* HISTORY */
-        .history-list{
-            max-height:700px;
-            overflow:auto;
-            padding-right:6px;
-        }
-
-        .history-list::-webkit-scrollbar{
-            width:7px;
-        }
-
-        .history-list::-webkit-scrollbar-thumb{
-            background:rgba(255,255,255,0.12);
-            border-radius:20px;
-        }
-
-        .history-item{
-            background:var(--card2);
-            border:1px solid var(--border);
-            border-radius:24px;
-            padding:22px;
-            margin-bottom:18px;
-            transition:0.3s ease;
-        }
-
-        .history-item:hover{
-            transform:translateY(-3px);
-        }
-
-        .history-top{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:14px;
-        }
-
-        .history-id{
-            font-size:0.9rem;
-            color:var(--text2);
-        }
-
-        .message-content{
-            color:var(--text2);
-            line-height:1.7;
-            margin-bottom:18px;
-            word-break:break-word;
-        }
-
-        /* STATUS */
-        .status{
-            display:flex;
-            align-items:center;
-            gap:16px;
-            border-radius:20px;
-            padding:16px;
-            color:white;
-        }
-
-        .status-icon{
-            width:55px;
-            height:55px;
-            border-radius:18px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            background:rgba(255,255,255,0.15);
-            font-size:22px;
-            flex-shrink:0;
-        }
-
-        .status h5{
-            margin:0;
-            font-size:1rem;
-            font-weight:700;
-        }
-
-        .status p{
-            margin:3px 0 0;
-            opacity:0.92;
-            font-size:0.92rem;
-        }
-
-        .fraud{ background:linear-gradient(135deg, #ef4444, #dc2626); }
-        .warning{ background:linear-gradient(135deg, #f59e0b, #ea580c); }
-        .legit{ background:linear-gradient(135deg, #10b981, #059669); }
-
-        /* EMPTY */
-        .empty{
-            min-height:450px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            flex-direction:column;
-            text-align:center;
-            color:var(--text2);
-        }
-
-        .empty i{
-            font-size:70px;
-            margin-bottom:20px;
-            opacity:0.5;
-        }
-
-        .empty h4{
-            font-weight:700;
-        }
-
-        /* CLEAR BTN */
-        .clear-btn{
-            border:none;
-            background:#ef4444;
-            color:white;
-            padding:12px 18px;
-            border-radius:16px;
-            font-weight:600;
-            transition:0.3s ease;
-        }
-
-        .clear-btn:hover{
-            transform:translateY(-2px);
-        }
-
-        /* MOBILE */
-        @media(max-width:1200px){
-            .grid-layout{
-                grid-template-columns:1fr;
-                gap:0;
-            }
-
-            .grid-layout.has-history{
-                grid-template-columns:1fr;
-                gap:28px;
-            }
-        }
-
-        @media(max-width:768px){
-            .main-container{ padding:14px; }
-            .topbar{ align-items:flex-start; }
-            .brand{ width:100%; }
-            .brand-text h1{ font-size:1.7rem; }
-            .logo{ width:60px; height:60px; font-size:24px; }
-            .card-header-custom, .card-body-custom{ padding:20px; }
-            .message-box{ min-height:220px; padding:18px; }
-            .analyze-btn{ padding:16px; }
-        }
-    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Analyze suspicious messages with AI-assisted fraud detection.">
+    <title>SafeGuard AI — Message Threat Scanner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
-
 <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
 
-    <!-- GLOW -->
-    <div class="bg-glow glow1"></div>
-    <div class="bg-glow glow2"></div>
-
-    <div class="main-container">
-        <div class="dashboard">
-
-            <!-- TOPBAR -->
-            <div class="topbar">
-                <div class="brand">
-                    <div class="logo">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div class="brand-text">
-                        <h1>SafeGuard AI</h1>
-                        <p>System Online & Monitoring</p>
-                    </div>
-                </div>
-
-                <div class="top-actions">
-                    <button class="history-btn" id="historyBtn" type="button">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                        History
-                    </button>
-                    <button class="theme-btn" id="themeBtn">
-                        <i class="fa-solid fa-moon"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- GRID -->
-            <div class="grid-layout {% if history %}has-history{% endif %}" id="mainGrid">
-
-                <!-- LEFT -->
-                <div class="glass-card">
-                    <div class="card-header-custom">
-                        <div class="card-title">
-                            <div class="icon">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                            </div>
-                            <div>
-                                <h3>Analyze Message</h3>
-                                <p>Check suspicious messages instantly</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-body-custom">
-                        <form method="POST" id="checkForm">
-                            <textarea
-                                class="message-box"
-                                id="message"
-                                name="message"
-                                placeholder="Paste suspicious message here..."
-                                required
-                            ></textarea>
-
-                            <button type="submit" class="analyze-btn">
-                                <i class="fa-solid fa-shield"></i>
-                                Analyze Message
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- RIGHT -->
-                <div class="glass-card history-card {% if history %}show{% endif %}" id="historyCard">
-                    <div class="card-header-custom">
-                        <div class="card-title">
-                            <div class="icon">
-                                <i class="fa-solid fa-clock-rotate-left"></i>
-                            </div>
-                            <div>
-                                <h3>Latest Result</h3>
-                                <p>Last user message and result</p>
-                            </div>
-                        </div>
-
-                        <div id="historyActions">
-                            {% if history %}
-                            <button class="clear-btn" onclick="clearHistory()" type="button" aria-label="Clear analysis history">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="card-body-custom">
-                        <div class="history-list">
-                            {% if history %}
-                                {% for item in history %}
-                                <div class="history-item">
-                                    <div class="history-top">
-                                        <strong>#{{ loop.index }}</strong>
-                                        <div class="history-id">Analysis</div>
-                                    </div>
-
-                                    <div class="message-content">
-                                        {{ item.text }}
-                                    </div>
-
-                                    <div class="status 
-                                        {% if item.status == 'FRAUD' %} fraud
-                                        {% elif item.status == 'WARNING' %} warning
-                                        {% elif item.status == 'LEGIT' %} legit
-                                        {% endif %}
-                                    ">
-                                        <div class="status-icon">
-                                            {% if item.status == 'FRAUD' %}
-                                                <i class="fa-solid fa-triangle-exclamation"></i>
-                                            {% elif item.status == 'WARNING' %}
-                                                <i class="fa-solid fa-circle-exclamation"></i>
-                                            {% elif item.status == 'LEGIT' %}
-                                                <i class="fa-solid fa-circle-check"></i>
-                                            {% endif %}
-                                        </div>
-
-                                        <div>
-                                            <h5>{{ item.status }}</h5>
-                                            <p>{{ item.reason }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            {% else %}
-                            <div class="empty">
-                                <i class="fa-solid fa-shield-heart"></i>
-                                <h4>No Messages Yet</h4>
-                                <p>Start analyzing suspicious messages</p>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="SafeGuard AI home">
+            <span class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img"><path d="M12 2 4 5v6c0 5.2 3.4 9.7 8 11 4.6-1.3 8-5.8 8-11V5l-8-3Zm0 3.1 5 1.9v4c0 3.7-2.2 7-5 8.1C9.2 18 7 14.7 7 11V7l5-1.9Zm-1.1 3.2v3.1H8.2v2.2h2.7v2.8h2.2v-2.8h2.7v-2.2h-2.7V8.3h-2.2Z"/></svg>
+            </span>
+            <span>
+                <strong>SafeGuard AI</strong>
+                <small>Message threat intelligence</small>
+            </span>
+        </a>
+        <div class="header-actions">
+            <span class="system-status"><i></i> Protection online</span>
+            <button class="icon-button" id="themeToggle" type="button" aria-label="Switch color theme">
+                <span class="theme-icon" aria-hidden="true">◐</span>
+            </button>
         </div>
-    </div>
+    </header>
 
-    <!-- Bootstrap -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <main class="shell">
+        <section class="intro" aria-labelledby="pageTitle">
+            <span class="eyebrow">AI + rule-based protection</span>
+            <h1 id="pageTitle">Know before you <span>trust.</span></h1>
+            <p>Paste a suspicious SMS, email, or chat message. SafeGuard checks it for fraud signals and explains the result.</p>
+        </section>
 
-    <script>
-        // =========================
-        // THEME
-        // =========================
-        const body = document.body;
-        const themeBtn = document.getElementById('themeBtn');
-        const historyBtn = document.getElementById('historyBtn');
-        const historyCard = document.getElementById('historyCard');
-        const mainGrid = document.getElementById('mainGrid');
+        <div class="workspace">
+            <section class="panel scanner-panel" aria-labelledby="scannerTitle">
+                <div class="panel-heading">
+                    <div>
+                        <span class="section-label">Threat scanner</span>
+                        <h2 id="scannerTitle">Analyze a message</h2>
+                    </div>
+                    <span class="privacy-note">Text is not saved permanently</span>
+                </div>
 
-        historyBtn.addEventListener('click', ()=>{
-            historyCard.classList.toggle('show');
-            mainGrid.classList.toggle('has-history', historyCard.classList.contains('show'));
-        });
+                <form id="analyzeForm" method="post" action="/">
+                    <div class="input-wrap">
+                        <textarea id="message" name="message" maxlength="5000" required aria-describedby="messageHint" placeholder="Paste the message you want to check…"></textarea>
+                        <div class="input-meta" id="messageHint">
+                            <span>Press Ctrl + Enter to scan</span>
+                            <span><b id="characterCount">0</b> / 5000</span>
+                        </div>
+                    </div>
+                    <div class="examples" aria-label="Example messages">
+                        <span>Try an example:</span>
+                        <button type="button" data-example="Your account will be blocked tonight. Verify now using the link below.">Account alert</button>
+                        <button type="button" data-example="Hi, the project meeting has moved to 3 PM tomorrow.">Normal message</button>
+                    </div>
+                    <button class="primary-button" id="analyzeButton" type="submit">
+                        <span class="button-icon" aria-hidden="true">✦</span>
+                        <span class="button-label">Scan message</span>
+                    </button>
+                    <p class="form-error" id="formError" role="alert" hidden></p>
+                </form>
+            </section>
 
-        if(localStorage.getItem('theme') === 'light'){
-            body.classList.add('light-mode');
-            themeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
-        }
+            <aside class="panel results-panel" aria-labelledby="resultsTitle">
+                <div class="panel-heading compact">
+                    <div>
+                        <span class="section-label">Recent scans</span>
+                        <h2 id="resultsTitle">Analysis results</h2>
+                    </div>
+                    <button class="text-button" id="clearHistory" type="button" {% if not history %}hidden{% endif %}>Clear</button>
+                </div>
 
-        themeBtn.addEventListener('click', ()=>{
-            body.classList.toggle('light-mode');
-            if(body.classList.contains('light-mode')){
-                localStorage.setItem('theme','light');
-                themeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
-            } else {
-                localStorage.setItem('theme','dark');
-                themeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
-            }
-        });
+                <div class="history-list" id="historyList" aria-live="polite">
+                    {% if history %}
+                        {% for item in history %}
+                        <article class="result-card result-{{ item.alert_class }}">
+                            <div class="result-topline">
+                                <span class="verdict">{{ item.status }}</span>
+                                <span class="source">{{ item.source|default('analysis') }}</span>
+                            </div>
+                            <p class="scanned-message">{{ item.text }}</p>
+                            <div class="reason-row">
+                                <span aria-hidden="true">{% if item.status == 'LEGIT' %}✓{% else %}!{% endif %}</span>
+                                <p>{{ item.reason }}</p>
+                            </div>
+                            {% if item.confidence is defined and item.confidence is not none %}
+                            <div class="confidence"><span style="width: {{ (item.confidence * 100)|round|int }}%"></span></div>
+                            <small>{{ (item.confidence * 100)|round|int }}% model confidence</small>
+                            {% endif %}
+                        </article>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state" id="emptyState">
+                            <span class="empty-icon" aria-hidden="true">⌁</span>
+                            <h3>No scans yet</h3>
+                            <p>Your latest results will appear here with a clear explanation.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </aside>
+        </div>
 
-        // =========================
-        // CLEAR HISTORY
-        // =========================
-        function clearHistory(){
-            if(confirm('Clear all history?')){
-                fetch('/clear_history', {
-                    method:'POST',
-                    headers:{
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                }).then(()=>{
-                    window.location.reload();
-                });
-            }
-        }
+        <section class="trust-strip" aria-label="Detection information">
+            <div><strong>Hybrid detection</strong><span>AI model plus fraud phrase checks</span></div>
+            <div><strong>Explainable verdicts</strong><span>See why a message was flagged</span></div>
+            <div><strong>Privacy aware</strong><span>History clears when the server restarts</span></div>
+        </section>
+        <p class="disclaimer">SafeGuard AI is a decision-support tool. Never share OTPs, passwords, or banking credentials based only on an automated result.</p>
+    </main>
 
-        // =========================
-        // SUBMIT LOADING & AJAX FETCH (NO REFRESH)
-        // =========================
-        document
-            .getElementById('checkForm')
-            .addEventListener('submit', function(e){
-                
-                e.preventDefault(); 
-
-                const form = this;
-                const btn = form.querySelector('button');
-                const msgBox = document.getElementById('message');
-
-                btn.classList.add('scanning');
-                msgBox.classList.add('scanning');
-                btn.disabled = true;
-
-                const aiSteps = [
-                    '<i class="fa-solid fa-microchip fa-beat-fade"></i> Initializing AI Core...',
-                    '<i class="fa-solid fa-radar fa-spin"></i> Scanning Threat Patterns...',
-                    '<i class="fa-solid fa-network-wired fa-fade"></i> Running ML Models...',
-                    '<i class="fa-solid fa-shield-halved fa-beat"></i> Finalizing Verdict...'
-                ];
-
-                let stepIndex = 0;
-                btn.innerHTML = aiSteps[stepIndex];
-
-                const scanInterval = setInterval(() => {
-                    stepIndex++;
-                    if(stepIndex < aiSteps.length) {
-                        btn.innerHTML = aiSteps[stepIndex];
-                    }
-                }, 800);
-
-                setTimeout(() => {
-                    clearInterval(scanInterval);
-                    
-                    // ==========================================
-                    // NAYA LOGIC: Bina refresh kiye data bhejna
-                    // ==========================================
-                    const formData = new FormData(form);
-
-                    fetch(window.location.href, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => {
-                        if(!response.ok){
-                            throw new Error('Request failed');
-                        }
-                        return response.text();
-                    })
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-                        
-                        document.querySelector('.history-list').innerHTML =
-                            doc.querySelector('.history-list').innerHTML;
-                        document.querySelector('#historyActions').innerHTML =
-                            doc.querySelector('#historyActions').innerHTML;
-                        requestAnimationFrame(() => {
-                            mainGrid.classList.add('has-history');
-                            historyCard.classList.add('show');
-                        });
-
-                        msgBox.value = ''; 
-                        btn.classList.remove('scanning');
-                        msgBox.classList.remove('scanning');
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fa-solid fa-shield"></i> Analyze Message';
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error Occurred';
-                        
-                        setTimeout(() => {
-                            btn.classList.remove('scanning');
-                            msgBox.classList.remove('scanning');
-                            btn.disabled = false;
-                            btn.innerHTML = '<i class="fa-solid fa-shield"></i> Analyze Message';
-                        }, 2000);
-                    });
-
-                }, 3200);
-
-            });
-
-        // =========================
-        // ENTER KEY SUBMIT FIX
-        // =========================
-        document
-            .getElementById('message')
-            .addEventListener('keydown', function(e){
-                if(e.key === 'Enter' && !e.shiftKey){
-                    e.preventDefault();
-                    document.querySelector('.analyze-btn').click();
-                }
-            });
-    </script>
-
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </body>
 </html>
