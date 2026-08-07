@@ -17,7 +17,10 @@
     <header class="site-header">
         <a class="brand" href="/" aria-label="SafeGuard AI home">
             <span class="brand-mark" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img"><path d="M12 2 4 5v6c0 5.2 3.4 9.7 8 11 4.6-1.3 8-5.8 8-11V5l-8-3Zm0 3.1 5 1.9v4c0 3.7-2.2 7-5 8.1C9.2 18 7 14.7 7 11V7l5-1.9Zm-1.1 3.2v3.1H8.2v2.2h2.7v2.8h2.2v-2.8h2.7v-2.2h-2.7V8.3h-2.2Z"/></svg>
+                <svg viewBox="0 0 24 24" focusable="false">
+                    <path class="shield-outline" d="M12 2.2 4.5 5.1v6.1c0 4.9 3.1 9 7.5 10.7 4.4-1.7 7.5-5.8 7.5-10.7V5.1L12 2.2Z"/>
+                    <path class="shield-half" d="M12 4.8 7 6.7v4.5c0 3.5 2 6.5 5 8V4.8Z"/>
+                </svg>
             </span>
             <span>
                 <strong>SafeGuard AI</strong>
@@ -25,7 +28,10 @@
             </span>
         </a>
         <div class="header-actions">
-            <span class="system-status"><i></i> Protection online</span>
+            <span class="system-status" role="status" aria-label="Protection is online">
+                <i aria-hidden="true"></i>
+                <span>Protection online</span>
+            </span>
             <button class="icon-button" id="themeToggle" type="button" aria-label="Switch color theme">
                 <span class="theme-icon" aria-hidden="true">◐</span>
             </button>
@@ -53,7 +59,7 @@
                     <div class="input-wrap">
                         <textarea id="message" name="message" maxlength="5000" required aria-describedby="messageHint" placeholder="Paste the message you want to check…"></textarea>
                         <div class="input-meta" id="messageHint">
-                            <span>Press Ctrl + Enter to scan</span>
+                            <span>Enter to scan · Shift + Enter for a new line</span>
                             <span><b id="characterCount">0</b> / 5000</span>
                         </div>
                     </div>

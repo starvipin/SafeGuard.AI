@@ -80,12 +80,15 @@ button { cursor: pointer; }
     width: 45px;
     height: 45px;
     place-items: center;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
     border-radius: 14px;
-    background: var(--accent);
-    color: var(--accent-ink);
-    box-shadow: 0 10px 30px rgba(31, 196, 138, 0.22);
+    background: color-mix(in srgb, var(--accent) 13%, var(--surface-solid));
+    color: var(--accent);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 18%, transparent);
 }
-.brand-mark svg { width: 27px; fill: currentColor; }
+.brand-mark svg { width: 27px; overflow: visible; }
+.brand-mark .shield-outline { fill: none; stroke: currentColor; stroke-linejoin: round; stroke-width: 1.8; }
+.brand-mark .shield-half { fill: currentColor; }
 .brand strong { display: block; font: 800 1rem/1.1 "Manrope", sans-serif; }
 .brand small { display: block; margin-top: 4px; color: var(--muted); font-size: 0.75rem; }
 
@@ -98,7 +101,23 @@ button { cursor: pointer; }
     font-size: 0.8rem;
     font-weight: 600;
 }
-.system-status i { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 5px rgba(94, 230, 178, 0.1); }
+.system-status i {
+    position: relative;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--success) 12%, transparent);
+    animation: status-online 1.8s ease-in-out infinite;
+}
+.system-status i::after {
+    position: absolute;
+    inset: -5px;
+    border: 1px solid var(--success);
+    border-radius: 50%;
+    content: "";
+    animation: status-ring 1.8s ease-out infinite;
+}
 .icon-button {
     width: 42px;
     height: 42px;
@@ -189,6 +208,14 @@ textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent)
 
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes reveal { from { opacity: 0; transform: translateY(7px); } }
+@keyframes status-online {
+    0%, 42%, 100% { opacity: 1; transform: scale(1); }
+    50%, 62% { opacity: 0.25; transform: scale(0.72); }
+}
+@keyframes status-ring {
+    0% { opacity: 0.75; transform: scale(0.7); }
+    58%, 100% { opacity: 0; transform: scale(1.55); }
+}
 
 @media (max-width: 900px) {
     .shell { padding-top: 34px; }
@@ -198,15 +225,39 @@ textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent)
 }
 
 @media (max-width: 620px) {
-    .site-header, .shell { width: min(100% - 24px, 1180px); }
-    .system-status { display: none; }
+    .site-header, .shell { width: min(1180px, calc(100% - 24px)); }
+    .site-header { padding: 16px 0; }
+    .brand { min-width: 0; gap: 10px; }
+    .brand-mark { width: 42px; height: 42px; flex: 0 0 42px; }
+    .brand > span:last-child { min-width: 0; }
+    .brand strong { white-space: nowrap; }
+    .brand small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .header-actions { gap: 8px; }
+    .system-status {
+        width: 42px;
+        height: 42px;
+        justify-content: center;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: var(--surface);
+    }
+    .system-status > span { display: none; }
     .shell { padding-top: 24px; }
     .intro { margin-bottom: 28px; }
-    .intro h1 { font-size: 2.65rem; }
+    .intro h1 { font-size: clamp(2.35rem, 13vw, 3rem); }
     .intro p { font-size: 0.93rem; }
     .scanner-panel, .results-panel { padding: 20px; border-radius: 20px; }
+    textarea { min-height: 185px; padding: 17px; font-size: 16px; }
+    .input-meta { gap: 8px; padding: 10px 13px; }
+    .primary-button { min-height: 56px; }
     .privacy-note { display: none; }
     .trust-strip { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 380px) {
+    .brand small { display: none; }
+    .input-meta { align-items: flex-end; flex-direction: column; }
+    .input-meta span:first-child { align-self: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {

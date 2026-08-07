@@ -25,9 +25,9 @@ function updateCharacterCount() {
 
 messageInput.addEventListener("input", updateCharacterCount);
 messageInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
         event.preventDefault();
-        form.requestSubmit();
+        if (!analyzeButton.disabled) form.requestSubmit();
     }
 });
 
