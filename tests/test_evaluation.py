@@ -6,7 +6,7 @@ import pytest
 import torch
 import yaml
 
-from model_training.step_03_evaluate_model import evaluate_model
+from src.model_training.step_03_evaluate_model import evaluate_model
 
 
 def evaluation_config(tmp_path):
@@ -36,9 +36,9 @@ def evaluation_config(tmp_path):
     return path
 
 
-@patch("model_training.step_03_evaluate_model.train_test_split")
-@patch("model_training.step_03_evaluate_model.DistilBertTokenizerFast.from_pretrained")
-@patch("model_training.step_03_evaluate_model.DistilBertForSequenceClassification.from_pretrained")
+@patch("src.model_training.step_03_evaluate_model.train_test_split")
+@patch("src.model_training.step_03_evaluate_model.DistilBertTokenizerFast.from_pretrained")
+@patch("src.model_training.step_03_evaluate_model.DistilBertForSequenceClassification.from_pretrained")
 def test_evaluate_model(mock_model_class, mock_tokenizer_class, mock_split, tmp_path, monkeypatch):
     config_path = evaluation_config(tmp_path)
     monkeypatch.chdir(tmp_path)

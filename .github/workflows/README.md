@@ -17,7 +17,7 @@ Existing CI aur deploy independent workflows hain. Deploy CI result ka wait nahi
 
 `deploy.yml` GitHub secret `HF_TOKEN` use karta hai. `Dockerfile` root `app.py` chalata hai, port `5000` par. `docker-compose.yml` local container ke liye hai. Existing deployment entrypoints preserve karne ke liye dono root mein hain.
 
-- `model_training/step_04_upload_to_hf.py` → trained model HF **model repo** mein.
+- `src/model_training/step_04_upload_to_hf.py` → trained model HF **model repo** mein.
 - `deploy.yml` → website code HF **Space** mein.
 
 Local folders organize karne se deployment nahi hota. `main` par push ya manual deploy workflow run live site update karta hai.

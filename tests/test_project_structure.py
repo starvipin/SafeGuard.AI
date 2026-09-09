@@ -11,7 +11,7 @@ import pandas as pd
 import torch
 import yaml
 
-from web_app import create_app
+from src.web_app import create_app
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,8 +28,8 @@ def test_web_assets_and_model_root_work_from_another_directory(tmp_path, monkeyp
         assert url.encode() in page.data
         response = client.get(url)
         assert response.status_code == 200
-        assert response.data == (ROOT / "web_app" / "static" / relative).read_bytes()
-    from web_app.settings import PROJECT_ROOT
+        assert response.data == (ROOT / "src" / "web_app" / "static" / relative).read_bytes()
+    from src.web_app.settings import PROJECT_ROOT
 
     assert PROJECT_ROOT == ROOT
     assert client.get("/health").get_json()["model_loaded"] is False
@@ -47,7 +47,7 @@ def test_data_preparation_command(tmp_path):
     }), encoding="utf-8")
     env = {**os.environ, "PYTHONPATH": str(ROOT)}
     result = subprocess.run(
-        [sys.executable, "-m", "model_training.step_01_prepare_data"], cwd=tmp_path, env=env,
+        [sys.executable, "-m", "src.model_training.step_01_prepare_data"], cwd=tmp_path, env=env,
         capture_output=True, text=True, timeout=60,
     )
     assert result.returncode == 0, result.stderr
@@ -55,7 +55,7 @@ def test_data_preparation_command(tmp_path):
 
 
 def test_training_saves_locally_without_upload_even_with_token(tmp_path, monkeypatch):
-    from model_training import step_02_train_model as training
+    from src.model_training import step_02_train_model as training
     import huggingface_hub
 
     monkeypatch.chdir(tmp_path)
@@ -101,7 +101,7 @@ def test_training_saves_locally_without_upload_even_with_token(tmp_path, monkeyp
 
 
 def test_upload_command_uses_configured_model_and_repository(tmp_path, monkeypatch):
-    from model_training import step_04_upload_to_hf as publishing
+    from src.model_training import step_04_upload_to_hf as publishing
     import dotenv
     import huggingface_hub
 

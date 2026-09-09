@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from main import app, main
+from app import app, main
 
 
 def test_main_runs_configured_app():

@@ -11,10 +11,6 @@ class AnalysisHistory:
         self._items: deque[dict] = deque(maxlen=max(1, max_items))
         self._lock = Lock()
 
-    @property
-    def items(self) -> deque[dict]:
-        return self._items
-
     def add(self, item: dict) -> None:
         with self._lock:
             self._items.appendleft(item)

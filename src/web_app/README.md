@@ -1,8 +1,8 @@
 # Website ka flow
 
-Yahan website aur trained model se prediction ka code hai. Training `model_training/` mein hai.
+Yahan website aur trained model se prediction ka code hai. Training `src/model_training/` mein hai.
 
-1. Root `app.py` → `web_app/__init__.py` ka `create_app()` call karta hai.
+1. Root `app.py` → `src/web_app/__init__.py` ka `create_app()` call karta hai.
 2. `settings.py` settings padhta hai; factory detector aur history objects register karti hai.
 3. Browser `GET /` bhejta hai → `routes.py` → `templates/index.html` render hota hai.
 4. Browser `/static/css/app.css` aur `/static/js/app.js` load karta hai.
@@ -23,6 +23,6 @@ Yahan website aur trained model se prediction ka code hai. Training `model_train
 | Environment settings | `settings.py` |
 | Flask setup | `__init__.py` |
 
-Run: project root se `uv run python app.py`. `main.py` alternate entrypoint hai. `/health` model load nahi karta. Files move hui hain, browser URLs ab bhi `/static/...` hain.
+Run: project root se `uv run python app.py`. `/health` model load nahi karta. Files move hui hain, browser URLs ab bhi `/static/...` hain.
 
 Runtime settings `.env`/environment se aati hain. Default model path project root ka `models/fraud_model_final/` hai. History current process ki memory mein rehti hai; restart par clear ho jati hai.

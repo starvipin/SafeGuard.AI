@@ -1,8 +1,8 @@
 import pandas as pd
 import torch
 
-from model_training.pipeline_helpers import classification_metrics, load_config
-from model_training.step_02_train_model import FraudDataset, cleanup_checkpoints
+from src.model_training.pipeline_helpers import classification_metrics, load_config
+from src.model_training.step_02_train_model import FraudDataset, cleanup_checkpoints
 
 
 def test_training_config_can_be_loaded(temp_config):

@@ -11,8 +11,5 @@ class Prediction:
     source: str
     confidence: float | None = None
 
-    def as_tuple(self) -> tuple[str, str, str]:
-        return self.status, self.reason, self.alert_class
-
     def to_dict(self) -> dict:
         return asdict(self)

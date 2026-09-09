@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 import yaml
 
-from model_training.pipeline_helpers import load_config, read_dataset
-from model_training.step_01_prepare_data import ingest_data
+from src.model_training.pipeline_helpers import load_config, read_dataset
+from src.model_training.step_01_prepare_data import ingest_data
 
 
 def write_config(path: Path, source: Path, target_dir: Path, name="dataset.csv") -> Path:

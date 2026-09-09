@@ -2,9 +2,9 @@ from unittest.mock import patch
 
 import pytest
 
-from web_app import create_app
-from web_app.prediction_result import Prediction
-from web_app.fraud_detector import FraudDetector
+from src.web_app import create_app
+from src.web_app.prediction_result import Prediction
+from src.web_app.fraud_detector import FraudDetector
 
 
 @pytest.fixture

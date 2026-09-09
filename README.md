@@ -15,8 +15,8 @@ Fraud messages scan karne wali Flask website. Trained DistilBERT model predictio
 
 | Section | Kya kaam hai? | Guide |
 | --- | --- | --- |
-| `model_training/` | Data → training → evaluation → HF model upload | [Training sequence](model_training/README.md) |
-| `web_app/` | Website, API, prediction aur history | [Website flow](web_app/README.md) |
+| `src/model_training/` | Data → training → evaluation → HF model upload | [Training sequence](src/model_training/README.md) |
+| `src/web_app/` | Website, API, prediction aur history | [Website flow](src/web_app/README.md) |
 | `.github/workflows/` | GitHub Actions: tests aur website deployment | [Actions flow](.github/workflows/README.md) |
 
 Website chalane par training nahi hoti. Step 04 trained model HF **model repository** mein bhejta hai; GitHub deploy website code HF **Space** mein bhejta hai.
@@ -27,27 +27,28 @@ Website chalane par training nahi hoti. Step 04 trained model HF **model reposit
 SafeGuard.AI/
 ├── README.md                         ← Pehle yeh padho
 ├── app.py                            ← Website / WSGI entrypoint
-├── main.py                           ← Wahi app chalane ka alternate entrypoint
-├── model_training/                   ← Sirf model banane ka kaam
-│   ├── README.md                     ← Inputs, outputs aur commands
-│   ├── step_01_prepare_data.py        ← Dataset pipeline mein lao
-│   ├── step_02_train_model.py         ← Model train aur local save karo
-│   ├── step_03_evaluate_model.py      ← Saved model ke metrics nikalo
-│   ├── step_04_upload_to_hf.py        ← Model explicitly HF par bhejo
-│   ├── pipeline_helpers.py           ← Shared config/data/metrics helpers
-│   └── __init__.py                    ← Python package marker
-├── web_app/                          ← Website ka poora code
-│   ├── README.md                     ← Request ka step-by-step flow
-│   ├── __init__.py                    ← create_app(): Flask app setup
-│   ├── settings.py                   ← Environment settings aur model path
-│   ├── routes.py                     ← Page, API, health aur history endpoints
-│   ├── fraud_detector.py             ← Model loading + fraud prediction
-│   ├── prediction_result.py          ← Prediction result ka format
-│   ├── scan_history.py               ← Recent results memory mein
-│   ├── templates/index.html          ← Page ka HTML
-│   └── static/
-│       ├── css/app.css               ← Design aur colors
-│       └── js/app.js                 ← Browser interactions
+├── src/                             ← Project ka actual source code
+│   ├── __init__.py                  ← Source package marker
+│   ├── model_training/              ← Sirf model banane ka kaam
+│   │   ├── README.md                ← Inputs, outputs aur commands
+│   │   ├── step_01_prepare_data.py  ← Dataset pipeline mein lao
+│   │   ├── step_02_train_model.py   ← Model train aur local save karo
+│   │   ├── step_03_evaluate_model.py ← Saved model ke metrics nikalo
+│   │   ├── step_04_upload_to_hf.py  ← Model explicitly HF par bhejo
+│   │   ├── pipeline_helpers.py     ← Shared config/data/metrics helpers
+│   │   └── __init__.py             ← Training package marker
+│   └── web_app/                     ← Website ka poora code
+│       ├── README.md                ← Request ka step-by-step flow
+│       ├── __init__.py             ← create_app(): Flask app setup
+│       ├── settings.py             ← Environment settings aur model path
+│       ├── routes.py               ← Page, API, health aur history endpoints
+│       ├── fraud_detector.py       ← Model loading + fraud prediction
+│       ├── prediction_result.py    ← Prediction result ka format
+│       ├── scan_history.py         ← Recent results memory mein
+│       ├── templates/index.html    ← Page ka HTML
+│       └── static/
+│           ├── css/app.css         ← Design aur colors
+│           └── js/app.js           ← Browser interactions
 ├── .github/workflows/                ← GitHub Actions ka section
 │   ├── README.md                     ← CI aur deploy ka difference
 │   ├── ci.yml                        ← Syntax aur automated tests
@@ -64,7 +65,7 @@ SafeGuard.AI/
 └── uv.lock                           ← Locked dependency versions
 ```
 
-Har kaam ka code ek hi jagah hai: website ke liye `web_app/`, model banane ke liye `model_training/`. Purana compatibility folder hata diya gaya hai; ab neeche diye naye commands/import paths use karo.
+Har kaam ka code `src/` ke andar hai: website ke liye `src/web_app/`, model banane ke liye `src/model_training/`. Website start karne ke liye root `app.py` use karo; training ke numbered commands neeche hain.
 
 Editor mein `.venv/` dikhe to woh installed Python dependencies hain; `__pycache__/` Python ka generated cache hai. Project samajhne ke liye inhe padhne/edit karne ki zaroorat nahi. `__init__.py` package import hone par chalti hai; website wali file Flask app banati hai, training wali sirf package ka introduction deti hai.
 
@@ -77,27 +78,27 @@ uv sync --frozen
 uv run python app.py
 ```
 
-Browser mein `http://localhost:5000` kholo. `uv run python main.py` bhi wahi app chalata hai. First real analysis par local model missing ho to `sainivipin/fraud-model-final` se download hota hai. Startup aur `/health` model load nahi karte.
+Browser mein `http://localhost:5000` kholo. First real analysis par local model missing ho to `sainivipin/fraud-model-final` se download hota hai. Startup aur `/health` model load nahi karte.
 
 ## Training ka sequence
 
 CSV rakho: `data/raw_data/fraud_dataset.csv`. Columns: `text`, `label` (`0` = legit, `1` = fraud). Settings `params.yaml` mein hain.
 
 ```bash
-uv run python -m model_training.step_01_prepare_data
-uv run python -m model_training.step_02_train_model
-uv run python -m model_training.step_03_evaluate_model
+uv run python -m src.model_training.step_01_prepare_data
+uv run python -m src.model_training.step_02_train_model
+uv run python -m src.model_training.step_03_evaluate_model
 ```
 
 Metrics check karne ke baad, jab publish karna ho, `.env` ya environment mein `HF_TOKEN` set karke:
 
 ```bash
-uv run python -m model_training.step_04_upload_to_hf
+uv run python -m src.model_training.step_04_upload_to_hf
 ```
 
 **Step 02 ab token present hone par bhi automatic upload nahi karta.** Upload explicit step 04 / upload command se hota hai. Training configured local model overwrite kar sakti hai; step 04 remote model update karta hai.
 
-DVC installed ho to `dvc repro` steps 01–03 chalata hai. Upload DVC ka part nahi hai. [Detailed inputs/outputs](model_training/README.md).
+DVC installed ho to `dvc repro` steps 01–03 chalata hai. Upload DVC ka part nahi hai. [Detailed inputs/outputs](src/model_training/README.md).
 
 ## API aur settings
 

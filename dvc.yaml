@@ -1,19 +1,19 @@
 stages:
   data_ingestion:
-    cmd: python -m model_training.step_01_prepare_data
+    cmd: python -m src.model_training.step_01_prepare_data
     deps:
-      - model_training/pipeline_helpers.py
-      - model_training/step_01_prepare_data.py
+      - src/model_training/pipeline_helpers.py
+      - src/model_training/step_01_prepare_data.py
       - params.yaml
       - data/raw_data/fraud_dataset.csv
     outs:
       - data/raw_data/dataset.csv
 
   training:
-    cmd: python -m model_training.step_02_train_model
+    cmd: python -m src.model_training.step_02_train_model
     deps:
-      - model_training/pipeline_helpers.py
-      - model_training/step_02_train_model.py
+      - src/model_training/pipeline_helpers.py
+      - src/model_training/step_02_train_model.py
       - data/raw_data/dataset.csv
     params:
       - train.learning_rate
@@ -26,10 +26,10 @@ stages:
       - models/fraud_model_final
 
   evaluation:
-    cmd: python -m model_training.step_03_evaluate_model
+    cmd: python -m src.model_training.step_03_evaluate_model
     deps:
-      - model_training/pipeline_helpers.py
-      - model_training/step_03_evaluate_model.py
+      - src/model_training/pipeline_helpers.py
+      - src/model_training/step_03_evaluate_model.py
       - models/fraud_model_final
       - data/raw_data/dataset.csv
     metrics:
