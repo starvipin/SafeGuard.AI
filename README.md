@@ -9,141 +9,128 @@ app_port: 5000
 
 # SafeGuard AI
 
-SafeGuard AI is an explainable fraud-message scanner. It combines a fine-tuned DistilBERT classifier with a deterministic phrase check, so the app remains useful when the model is unavailable and can explain risky signals to the user.
+Fraud messages scan karne wali Flask website. Trained DistilBERT model prediction deta hai; model unavailable ho to keyword fallback kaam karta hai.
 
-## Highlights
+## Yahan se samajhna shuru karo
 
-- Lazy model loading keeps startup and health checks fast.
-- Hybrid verdicts distinguish model, keyword, and combined results.
-- Responsive, accessible interface with dark/light themes and no artificial scan delay.
-- Versioned JSON API for integrations.
-- Bounded, thread-safe in-memory history.
-- Reusable ingestion, training, evaluation, metrics, and Hugging Face publishing modules.
-- Strict pytest CI and DVC-compatible ML stages.
+| Section | Kya kaam hai? | Guide |
+| --- | --- | --- |
+| `model_training/` | Data → training → evaluation → HF model upload | [Training sequence](model_training/README.md) |
+| `web_app/` | Website, API, prediction aur history | [Website flow](web_app/README.md) |
+| `.github/workflows/` | GitHub Actions: tests aur website deployment | [Actions flow](.github/workflows/README.md) |
 
-## Architecture
+Website chalane par training nahi hoti. Step 04 trained model HF **model repository** mein bhejta hai; GitHub deploy website code HF **Space** mein bhejta hai.
+
+## Simple file structure
 
 ```text
 SafeGuard.AI/
-├── app.py                         # WSGI/deployment entrypoint
-├── main.py                        # Local development entrypoint
-├── src/
-│   └── safeguard_ai/
-│       ├── __init__.py            # Flask application factory
-│       ├── config.py              # Environment-driven configuration
-│       ├── domain.py              # Typed domain results
-│       ├── services/
-│       │   ├── detector.py        # Model lifecycle + hybrid detection
-│       │   └── history.py         # Thread-safe bounded history
-│       ├── web/
-│       │   └── routes.py          # HTML, JSON API, and health routes
-│       └── ml/
-│           ├── common.py          # Dataset/config/metrics utilities
-│           ├── ingestion.py
-│           ├── training.py
-│           ├── evaluation.py
-│           └── hub.py
-├── static/                        # Versioned CSS and JavaScript
-├── templates/                     # Jinja templates
-├── tests/                         # Unit and integration tests
-├── params.yaml                    # ML pipeline configuration
-└── dvc.yaml                       # Reproducible pipeline stages
+├── README.md                         ← Pehle yeh padho
+├── app.py                            ← Website / WSGI entrypoint
+├── main.py                           ← Wahi app chalane ka alternate entrypoint
+├── model_training/                   ← Sirf model banane ka kaam
+│   ├── README.md                     ← Inputs, outputs aur commands
+│   ├── step_01_prepare_data.py        ← Dataset pipeline mein lao
+│   ├── step_02_train_model.py         ← Model train aur local save karo
+│   ├── step_03_evaluate_model.py      ← Saved model ke metrics nikalo
+│   ├── step_04_upload_to_hf.py        ← Model explicitly HF par bhejo
+│   ├── pipeline_helpers.py           ← Shared config/data/metrics helpers
+│   └── __init__.py                    ← Python package marker
+├── web_app/                          ← Website ka poora code
+│   ├── README.md                     ← Request ka step-by-step flow
+│   ├── __init__.py                    ← create_app(): Flask app setup
+│   ├── settings.py                   ← Environment settings aur model path
+│   ├── routes.py                     ← Page, API, health aur history endpoints
+│   ├── fraud_detector.py             ← Model loading + fraud prediction
+│   ├── prediction_result.py          ← Prediction result ka format
+│   ├── scan_history.py               ← Recent results memory mein
+│   ├── templates/index.html          ← Page ka HTML
+│   └── static/
+│       ├── css/app.css               ← Design aur colors
+│       └── js/app.js                 ← Browser interactions
+├── .github/workflows/                ← GitHub Actions ka section
+│   ├── README.md                     ← CI aur deploy ka difference
+│   ├── ci.yml                        ← Syntax aur automated tests
+│   └── deploy.yml                    ← Website code HF Space par sync
+├── params.yaml                       ← Training settings aur data/model paths
+├── dvc.yaml                          ← Steps 01 → 02 → 03 ka pipeline
+├── data/raw_data/                    ← Local input aur copied dataset
+├── models/fraud_model_final/         ← Saved model + tokenizer
+├── metrics.json                      ← Training/evaluation scores
+├── tests/                            ← Regression tests
+├── Dockerfile                        ← Live website ka container
+├── docker-compose.yml                ← Local Docker run
+├── pyproject.toml                    ← Dependencies + test settings
+└── uv.lock                           ← Locked dependency versions
 ```
 
-The root entrypoint creates the Flask app through an application factory. Routes depend on services registered in `app.extensions`, keeping HTTP concerns separate from detection and state management. ML stages reuse validated I/O and metric helpers instead of duplicating pipeline code.
+Har kaam ka code ek hi jagah hai: website ke liye `web_app/`, model banane ke liye `model_training/`. Purana compatibility folder hata diya gaya hai; ab neeche diye naye commands/import paths use karo.
 
-## Quick start
+Editor mein `.venv/` dikhe to woh installed Python dependencies hain; `__pycache__/` Python ka generated cache hai. Project samajhne ke liye inhe padhne/edit karne ki zaroorat nahi. `__init__.py` package import hone par chalti hai; website wali file Flask app banati hai, training wali sirf package ka introduction deti hai.
 
-Prerequisites: Python 3.12+ and [uv](https://docs.astral.sh/uv/).
+## Website kaise chalayen
+
+Python 3.12+ aur `uv` chahiye. Saare commands project root se chalao:
 
 ```bash
 uv sync --frozen
 uv run python app.py
 ```
 
-Open `http://localhost:5000`.
+Browser mein `http://localhost:5000` kholo. `uv run python main.py` bhi wahi app chalata hai. First real analysis par local model missing ho to `sainivipin/fraud-model-final` se download hota hai. Startup aur `/health` model load nahi karte.
 
-The app downloads `sainivipin/fraud-model-final` on the first real analysis if the model is not already present. If loading fails, the scanner safely falls back to its phrase detector.
+## Training ka sequence
 
-## API
-
-Analyze a message:
+CSV rakho: `data/raw_data/fraud_dataset.csv`. Columns: `text`, `label` (`0` = legit, `1` = fraud). Settings `params.yaml` mein hain.
 
 ```bash
-curl -X POST http://localhost:5000/api/v1/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Verify your account immediately"}'
+uv run python -m model_training.step_01_prepare_data
+uv run python -m model_training.step_02_train_model
+uv run python -m model_training.step_03_evaluate_model
 ```
 
-Example response:
+Metrics check karne ke baad, jab publish karna ho, `.env` ya environment mein `HF_TOKEN` set karke:
 
-```json
-{
-  "alert_class": "warning",
-  "confidence": null,
-  "reason": "Suspicious phrases found: immediately, account",
-  "source": "keywords",
-  "status": "WARNING",
-  "text": "Verify your account immediately"
-}
+```bash
+uv run python -m model_training.step_04_upload_to_hf
 ```
 
-Other endpoints:
+**Step 02 ab token present hone par bhi automatic upload nahi karta.** Upload explicit step 04 / upload command se hota hai. Training configured local model overwrite kar sakti hai; step 04 remote model update karta hai.
 
-- `GET /` — web interface
-- `GET /health` — lightweight service health
-- `POST /clear_history` — clear current process history
+DVC installed ho to `dvc repro` steps 01–03 chalata hai. Upload DVC ka part nahi hai. [Detailed inputs/outputs](model_training/README.md).
 
-## Configuration
+## API aur settings
 
-Runtime settings are read from environment variables:
+| Request | Kaam |
+| --- | --- |
+| `GET /` | Website |
+| `POST /` | HTML form se scan |
+| `POST /api/v1/analyze` | JSON message scan |
+| `GET /health` | Lightweight health status |
+| `POST /clear_history` | Current process ki history clear |
 
-| Variable | Default | Purpose |
+JSON API ko `Content-Type: application/json` aur body `{"message":"Verify your account immediately"}` bhejo. Response mein `text`, `status`, `reason`, `alert_class`, `source`, `confidence` milte hain.
+
+| Setting | Kahan? | Default / purpose |
 | --- | --- | --- |
-| `HOST` | `0.0.0.0` | Web bind address |
-| `PORT` | `5000` | Web port |
-| `FLASK_DEBUG` | `false` | Development debug mode |
-| `HF_MODEL_REPO` | `sainivipin/fraud-model-final` | Model repository |
-| `MODEL_DIR` | `models/fraud_model_final` | Local model directory |
-| `HISTORY_LIMIT` | `10` | Maximum recent results |
-| `HF_TOKEN` | unset | Optional model publishing token |
+| Data paths, epochs, batch size, learning rate | `params.yaml` | Training settings |
+| `HOST` / `PORT` | Environment / `.env` | `0.0.0.0` / `5000` |
+| `FLASK_DEBUG` | Environment / `.env` | `false` |
+| `HF_MODEL_REPO` | Environment / `.env` | `sainivipin/fraud-model-final` |
+| `MODEL_DIR` | Environment / `.env` | Project ka `models/fraud_model_final` |
+| `MODEL_FILENAME` | Environment / `.env` | `model.safetensors` |
+| `HISTORY_LIMIT` | Environment / `.env` | `10` |
+| `MAX_CONTENT_LENGTH` | Environment / `.env` | `65536` bytes |
+| `HF_TOKEN` | Environment / `.env`; deploy ke liye GitHub secret | HF token |
 
-Never commit `.env` or access tokens.
+`.env`, tokens, local data aur model artifacts Git mein commit mat karo. Training output path badalne par website ka `MODEL_DIR` bhi uske hisaab se set karo.
 
-## Testing
+## Verify aur deploy
 
 ```bash
 uv run --frozen pytest -q
 ```
 
-Verified after the architecture refactor: `20 passed`.
+Docker ab bhi root `app.py` chalata hai, port `5000` par. GitHub `main` par push se existing deploy workflow live HF Space update karta hai. [Actions guide](.github/workflows/README.md).
 
-## ML pipeline
-
-If DVC is installed, run the full pipeline from the synced project environment:
-
-```bash
-dvc repro
-```
-
-Or run individual modules:
-
-```bash
-uv run python -m src.safeguard_ai.ml.ingestion
-uv run python -m src.safeguard_ai.ml.training
-uv run python -m src.safeguard_ai.ml.evaluation
-```
-
-The local source dataset is expected at `data/raw_data/fraud_dataset.csv`; generated data and model artifacts remain outside Git.
-
-To explicitly publish a trained model:
-
-```bash
-HF_TOKEN=... uv run python src/upload_to_hf.py
-```
-
-## Production notes
-
-- Run behind HTTPS and a production WSGI server.
-- The bundled history store is process-local; use Redis or a database for shared multi-worker history.
-- Treat the verdict as decision support. Users should independently verify payment, credential, and account-security requests.
+Production mein HTTPS aur production WSGI server use karo. History process-local hai; shared multi-worker history ke liye external store chahiye. Fraud verdict decision support hai; sensitive requests independently verify karo.

@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizerFast
 
-from .common import (
+from .pipeline_helpers import (
     classification_metrics,
     load_config,
     pipeline_data_path,

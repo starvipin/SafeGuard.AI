@@ -2,9 +2,9 @@ from unittest.mock import patch
 
 import pytest
 
-from src.safeguard_ai import create_app
-from src.safeguard_ai.domain import Prediction
-from src.safeguard_ai.services.detector import FraudDetector
+from web_app import create_app
+from web_app.prediction_result import Prediction
+from web_app.fraud_detector import FraudDetector
 
 
 @pytest.fixture

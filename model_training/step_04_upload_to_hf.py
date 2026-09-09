@@ -34,3 +34,20 @@ def upload_model(
         commit_message="Publish trained SafeGuard AI model",
     )
     return repo_id
+
+
+def main() -> None:
+    """Publish the model directory configured for steps 02 and 03."""
+    from dotenv import load_dotenv
+
+    from .pipeline_helpers import load_config
+
+    load_dotenv()
+    config = load_config()
+    model_dir = config["train"].get("model_output_dir", "models/fraud_model_final")
+    repository = upload_model(model_dir)
+    print(f"Stage 04 complete: model uploaded to '{repository}'")
+
+
+if __name__ == "__main__":
+    main()

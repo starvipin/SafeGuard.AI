@@ -35,7 +35,7 @@ jobs:
         run: uv sync --frozen
 
       - name: Check Python syntax
-        run: uv run python -m compileall -q app.py main.py src tests
+        run: uv run python -m compileall -q app.py main.py web_app model_training tests
 
       - name: Run test suite
         run: uv run pytest -q

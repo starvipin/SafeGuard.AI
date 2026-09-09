@@ -2,18 +2,18 @@
 
 from flask import Flask
 
-from .config import AppConfig
-from .services.detector import FraudDetector
-from .services.history import AnalysisHistory
-from .web.routes import web
+from .settings import AppConfig
+from .fraud_detector import FraudDetector
+from .scan_history import AnalysisHistory
+from .routes import web
 
 
 def create_app(config: dict | None = None) -> Flask:
     """Create and configure a SafeGuard AI application instance."""
     app = Flask(
         __name__,
-        static_folder="../../static",
-        template_folder="../../templates",
+        static_folder="static",
+        template_folder="templates",
     )
     app.config.from_object(AppConfig)
     if config:

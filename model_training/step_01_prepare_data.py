@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .common import load_config, pipeline_data_path
+from .pipeline_helpers import load_config, pipeline_data_path
 
 
 def ingest_data(config_path: str | Path = "params.yaml") -> Path:

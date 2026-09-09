@@ -1,10 +1,10 @@
 """WSGI entrypoint for SafeGuard AI.
 
-The application implementation lives in ``src.safeguard_ai``. Keeping this
+The application implementation lives in ``web_app``. Keeping this
 small module makes local execution, Docker, and WSGI servers use the same app.
 """
 
-from src.safeguard_ai import create_app
+from web_app import create_app
 
 
 app = create_app()

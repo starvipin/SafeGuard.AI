@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import random
 import shutil
 from pathlib import Path
@@ -13,7 +12,7 @@ from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizerFast
 
-from .common import (
+from .pipeline_helpers import (
     classification_metrics,
     load_config,
     pipeline_data_path,
@@ -133,10 +132,6 @@ def train_model(config_path: str | Path = "params.yaml") -> dict[str, float]:
     tokenizer.save_pretrained(model_output_dir)
     cleanup_checkpoints(checkpoint_root)
 
-    if os.getenv("HF_TOKEN"):
-        from .hub import upload_model
-
-        upload_model(model_output_dir)
     return metrics
 
 

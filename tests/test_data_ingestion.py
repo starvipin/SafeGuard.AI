@@ -4,9 +4,8 @@ import pandas as pd
 import pytest
 import yaml
 
-from src.safeguard_ai.ml.common import load_config, read_dataset
-from src.safeguard_ai.ml.ingestion import ingest_data
-from src.stage_01_get_data import get_data
+from model_training.pipeline_helpers import load_config, read_dataset
+from model_training.step_01_prepare_data import ingest_data
 
 
 def write_config(path: Path, source: Path, target_dir: Path, name="dataset.csv") -> Path:
@@ -53,14 +52,6 @@ def test_ingest_data_raises_for_missing_source(tmp_path):
     )
     with pytest.raises(FileNotFoundError, match="Source dataset not found"):
         ingest_data(config_path)
-
-
-def test_legacy_entrypoint_reports_missing_source(tmp_path, capsys):
-    config_path = write_config(
-        tmp_path / "params.yaml", tmp_path / "missing.csv", tmp_path / "data"
-    )
-    assert get_data(config_path) is None
-    assert "Stage 01 failed" in capsys.readouterr().out
 
 
 def test_dataset_validation_rejects_invalid_labels(tmp_path):

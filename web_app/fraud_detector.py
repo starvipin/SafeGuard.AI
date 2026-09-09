@@ -7,7 +7,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Mapping
 
-from ..domain import Prediction
+from .prediction_result import Prediction
 
 
 LOGGER = logging.getLogger(__name__)
