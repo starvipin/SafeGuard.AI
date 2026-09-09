@@ -1,3 +1,5 @@
+# Project metadata, installed dependencies, pytest settings aur uv package sources ka configuration.
+# Project ka naam/version/readme aur required Python version.
 [project]
 name = "SafeGuard.AI"
 version = "0.1.0"
@@ -5,36 +7,53 @@ description = "AI-assisted fraud-message detection with an explainable Flask int
 readme = "README.md"
 requires-python = ">=3.12" 
 
+# uv sync in declared packages ko lockfile ke resolved versions ke saath install karta hai.
 dependencies = [
+    # Flask website/API framework; baaki packages data, model aur testing tools available karte hain.
     "flask>=3.1.3",
+    # Serialized Python objects ke liye declared dependency; current DistilBERT saving save_pretrained se hoti hai.
     "joblib>=1.5.3",
+    # Numerical arrays aur pandas data tables/CSV processing.
     "numpy>=2.4.3",
     "pandas>=3.0.2",
+    # Environment file loading aur YAML config reading.
     "python-dotenv>=1.2.2",
     "pyyaml>=6.0.3",
+    # HTTP requests ke liye declared library; HF operations current code mein huggingface_hub se hote hain.
     "requests>=2.33.1",
+    # Train/test splitting aur accuracy/F1/ROC AUC metrics.
     "scikit-learn>=1.8.0",
+    # XGBoost bhi declared dependency hai; current numbered training pipeline DistilBERT use karti hai.
     "xgboost>=3.2.0",
+    # PyTorch aur matching vision/audio packages CUDA 12.1 build se pinned hain.
     "torch==2.4.1+cu121",
     "torchvision==0.19.1+cu121",
     "torchaudio==2.4.1+cu121",
+    # Pretrained DistilBERT classes aur tokenization support.
     "transformers>=5.7.0",
     "tokenizers>=0.22.2",
+    # Automated tests aur mocking helpers; abhi project dependencies list ka part hain.
     "pytest>=8.0.0",
     "pytest-mock>=3.12.0",
+    # Tokenization support ke additional packages.
     "sentencepiece>=0.2.1",
     "tiktoken>=0.12.0",
+    # HF model repository create/upload aur download APIs.
     "huggingface-hub>=1.13.0",
+    # Existing additional dotenv dependency declaration; .env loading import python-dotenv provide karta hai.
     "dotenv>=0.9.9",
+    # Notebook interface dependency; website start karne ke liye notebook run nahi hota.
     "jupyter>=1.1.1",
 ]
 
+# Pytest tests/ folder aur test_* names discover karega; project root import path mein rahega.
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+# Verbose test names, short tracebacks, strict markers aur warning display control.
 addopts = [
     "--verbose",
     "--tb=short",
@@ -42,11 +61,14 @@ addopts = [
     "--disable-warnings",
 ]
 
+# CUDA-enabled PyTorch wheels ke liye special package index.
 [[tool.uv.index]]
 name = "pytorch-cu121"
 url = "https://download.pytorch.org/whl/cu121"
+# Sirf explicitly mapped packages is index se resolve hon, sab dependencies nahi.
 explicit = true
 
+# Torch family ko upar wale pytorch-cu121 index se bind karte hain.
 [tool.uv.sources]
 torch = { index = "pytorch-cu121" }
 torchvision = { index = "pytorch-cu121" }

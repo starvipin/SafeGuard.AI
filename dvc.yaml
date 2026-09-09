@@ -1,20 +1,26 @@
+# DVC pipeline ka order dependencies se banta hai: data preparation -> training -> evaluation. HF upload isme nahi hai.
 stages:
+  # Step 01 source CSV se prepared dataset banata hai.
   data_ingestion:
     cmd: python -m src.model_training.step_01_prepare_data
+    # Is stage ke source/config/data badlein to DVC stage ko out-of-date maan sakta hai.
     deps:
       - src/model_training/pipeline_helpers.py
       - src/model_training/step_01_prepare_data.py
       - params.yaml
       - data/raw_data/fraud_dataset.csv
+    # Prepared dataset tracked output hai aur next training stage ka input banta hai.
     outs:
       - data/raw_data/dataset.csv
 
+  # Step 02 prepared CSV se model train karke models/fraud_model_final save karta hai.
   training:
     cmd: python -m src.model_training.step_02_train_model
     deps:
       - src/model_training/pipeline_helpers.py
       - src/model_training/step_02_train_model.py
       - data/raw_data/dataset.csv
+    # Training ki in YAML values ke changes ko DVC dependency ke roop mein track karta hai.
     params:
       - train.learning_rate
       - train.model_name
@@ -25,6 +31,7 @@ stages:
     outs:
       - models/fraud_model_final
 
+  # Step 03 saved model aur prepared data se scores nikalega.
   evaluation:
     cmd: python -m src.model_training.step_03_evaluate_model
     deps:
@@ -32,6 +39,7 @@ stages:
       - src/model_training/step_03_evaluate_model.py
       - models/fraud_model_final
       - data/raw_data/dataset.csv
+    # metrics.json ko comparison ke liye metric output declare karte hain; cache:false DVC cache mein store nahi karta.
     metrics:
       - metrics.json:
           cache: false

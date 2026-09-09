@@ -1,3 +1,4 @@
+# Evaluation ke scores aur file output verify karte hain; pretrained model/tokenizer ke calls mocked hain.
 import json
 from unittest.mock import MagicMock, patch
 
@@ -9,6 +10,7 @@ import yaml
 from src.model_training.step_03_evaluate_model import evaluate_model
 
 
+# Temporary dataset, model folder aur YAML banao; project data/model untouched rehte hain.
 def evaluation_config(tmp_path):
     data_dir = tmp_path / "data"
     model_dir = tmp_path / "model"
@@ -36,11 +38,14 @@ def evaluation_config(tmp_path):
     return path
 
 
+# Decorators real dependencies replace karte hain; bottom decorator ka mock function mein pehla argument banta hai.
 @patch("src.model_training.step_03_evaluate_model.train_test_split")
 @patch("src.model_training.step_03_evaluate_model.DistilBertTokenizerFast.from_pretrained")
 @patch("src.model_training.step_03_evaluate_model.DistilBertForSequenceClassification.from_pretrained")
+# Do fixed test samples ko fake model bilkul sahi predict karta hai, isliye sab metrics 1.0 honi chahiye.
 def test_evaluate_model(mock_model_class, mock_tokenizer_class, mock_split, tmp_path, monkeypatch):
     config_path = evaluation_config(tmp_path)
+    # metrics.json temporary folder mein likhegi, project ki metrics file par nahi.
     monkeypatch.chdir(tmp_path)
     mock_split.return_value = (
         None,
@@ -58,10 +63,12 @@ def test_evaluate_model(mock_model_class, mock_tokenizer_class, mock_split, tmp_
 
     metrics = evaluate_model(config_path)
 
+    # Return dictionary aur disk par saved JSON dono same expected scores hone chahiye.
     assert metrics == {"accuracy": 1.0, "f1_score": 1.0, "roc_auc": 1.0}
     assert json.loads((tmp_path / "metrics.json").read_text()) == metrics
 
 
+# Dataset hata kar missing-file behavior verify karo; model loading tak pahunchna nahi chahiye.
 def test_evaluate_model_reports_missing_dataset(tmp_path):
     config_path = evaluation_config(tmp_path)
     (tmp_path / "data" / "dataset.csv").unlink()

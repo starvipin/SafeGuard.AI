@@ -1,3 +1,4 @@
+# Pytest ke reusable fixtures: temporary config, sample messages aur fake model/tokenizer yahan milte hain.
 import pytest
 import tempfile
 import os
@@ -6,20 +7,25 @@ import sys
 import yaml
 from unittest.mock import MagicMock
 
+# Tests mein pandas ke Python string storage ko prefer karte hain.
 os.environ.setdefault("PANDAS_STRING_STORAGE", "python")
 os.environ.setdefault("PANDAS_FUTURE_INFER_STRING", "0")
 
 
+# Windows test environment mein pyarrow native-import issue se bachne ke liye uske imports block hote hain.
 class _BlockPyArrow(importlib.abc.MetaPathFinder):
+    # PyArrow import aaye to ModuleNotFoundError do; baaki imports ko normal process hone do.
     def find_spec(self, fullname, path, target=None):
         if fullname == "pyarrow" or fullname.startswith("pyarrow."):
             raise ModuleNotFoundError("pyarrow is disabled during tests")
         return None
 
 
+# Yeh import hook test process mein pehle check hota hai; production app mein nahi lagta.
 sys.meta_path.insert(0, _BlockPyArrow())
 
 @pytest.fixture
+# Fixture ek temporary YAML banata hai; test ko path deta hai aur test ke baad file delete karta hai.
 def temp_config():
     """Create a temporary config file for testing."""
     config = {
@@ -42,12 +48,14 @@ def temp_config():
         yaml.dump(config, f)
         config_path = f.name
 
+    # yield se pehle setup, uske baad cleanup; pytest test complete hone par execution yahan resume karta hai.
     yield config_path
 
     # Cleanup
     os.unlink(config_path)
 
 @pytest.fixture
+# Chhote sample dataset mein 1 fraud aur 0 legit label hai; real user data ki zaroorat nahi.
 def sample_data():
     """Create sample fraud data for testing."""
     # Lazy import to avoid access violation on Windows
@@ -68,6 +76,7 @@ def sample_data():
     return df
 
 @pytest.fixture
+# MagicMock fake token IDs/masks deta hai, isliye tokenizer download nahi karna padta.
 def mock_tokenizer():
     """Mock tokenizer for testing."""
     mock = MagicMock()
@@ -78,6 +87,7 @@ def mock_tokenizer():
     return mock
 
 @pytest.fixture
+# Fake model output tests ko predictable banata hai; asli model inference yahan nahi chalti.
 def mock_model():
     """Mock model for testing."""
     mock = MagicMock()

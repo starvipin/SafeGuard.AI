@@ -1,41 +1,56 @@
+# GitHub Actions CI: code syntax aur tests check hote hain; yeh workflow live site deploy nahi karta.
 name: Continuous Integration
 
+# Yahan triggers define hain: matching push/PR event ya GitHub Actions se manual Run workflow.
 on:
+  # Manual run ke liye button enable karta hai.
   workflow_dispatch:
+  # Sirf main aur develop par push hone se yeh CI automatic chalegi.
   push:
     branches: [main, develop]
+  # PR ki target/base branch main ya develop ho to open/update/reopen events par CI chalti hai.
   pull_request:
     branches: [main, develop]
 
+# Workflow ko repository read access chahiye; source code push karne ka write access nahi.
 permissions:
   contents: read
 
+# Same workflow/ref ki nayi run aane par purani ongoing run cancel karke resources bachao.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # Is job ke steps same Ubuntu runner par sequence mein chalte hain.
   test:
     runs-on: ubuntu-latest
+    # Job 20 minutes se zyada le to GitHub use timeout karega.
     timeout-minutes: 20
 
     steps:
+      # Repository files runner ke workspace mein lao.
       - name: Check out repository
         uses: actions/checkout@v4
 
+      # Runner par project ke liye Python 3.12 select karo.
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
 
+      # uv dependency/environment manager install karo.
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
+      # uv.lock ke versions install karo; --frozen lockfile update nahi karta.
       - name: Install locked dependencies
         run: uv sync --frozen
 
+      # Python files compile karke syntax errors pakdo; scripts ki training/upload functions execute nahi hoti.
       - name: Check Python syntax
         run: uv run python -m compileall -q app.py src tests
 
+      # Pytest suite chalegi; failed test par CI fail hoti hai.
       - name: Run test suite
         run: uv run pytest -q

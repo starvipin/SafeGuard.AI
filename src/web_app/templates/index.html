@@ -1,19 +1,26 @@
+{# Jinja template: Flask history deta hai; yeh file HTML banati hai, app.js baad ke scans update karta hai. #}
 <!doctype html>
 <html lang="en">
+{# Page metadata, title, fonts aur CSS links browser ko milte hain. #}
 <head>
     <meta charset="utf-8">
+    {# Mobile browser ko device width use karne do, taaki responsive CSS sahi kaam kare. #}
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Analyze suspicious messages with AI-assisted fraud detection.">
     <title>SafeGuard AI — Message Threat Scanner</title>
+    {# Google Fonts connections pehle prepare karte hain; neeche actual font stylesheet load hoti hai. #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    {# url_for static asset ka URL banata hai; physical file src/web_app/static ke andar hai. #}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
+    {# Decorative backgrounds screen readers ke liye hidden hain. #}
     <div class="ambient ambient-one" aria-hidden="true"></div>
     <div class="ambient ambient-two" aria-hidden="true"></div>
 
+    {# Header mein home link, inline SVG shield, status label aur theme toggle hai. #}
     <header class="site-header">
         <a class="brand" href="/" aria-label="SafeGuard AI home">
             <span class="brand-mark" aria-hidden="true">
@@ -28,10 +35,12 @@
             </span>
         </a>
         <div class="header-actions">
+            {# Yeh static UI status label hai; apne aap /health endpoint ko poll nahi karta. #}
             <span class="system-status" role="status" aria-label="Protection is online">
                 <i aria-hidden="true"></i>
                 <span>Protection online</span>
             </span>
+            {# Is ID par JavaScript click listener theme badalta hai; aria-label button ka accessible naam deta hai. #}
             <button class="icon-button" id="themeToggle" type="button" aria-label="Switch color theme">
                 <span class="theme-icon" aria-hidden="true">◐</span>
             </button>
@@ -39,12 +48,14 @@
     </header>
 
     <main class="shell">
+        {# User ko scanner ka purpose aur input ke baare mein introduction. #}
         <section class="intro" aria-labelledby="pageTitle">
             <span class="eyebrow">AI + rule-based protection</span>
             <h1 id="pageTitle">Know before you <span>trust.</span></h1>
             <p>Paste a suspicious SMS, email, or chat message. SafeGuard checks it for fraud signals and explains the result.</p>
         </section>
 
+        {# Scanner aur results ko CSS desktop par side-by-side, mobile par stacked dikhata hai. #}
         <div class="workspace">
             <section class="panel scanner-panel" aria-labelledby="scannerTitle">
                 <div class="panel-heading">
@@ -55,8 +66,10 @@
                     <span class="privacy-note">Text is not saved permanently</span>
                 </div>
 
+                {# Normal HTML submission POST / hai; JavaScript enabled ho to submit intercept karke JSON API use hoti hai. #}
                 <form id="analyzeForm" method="post" action="/">
                     <div class="input-wrap">
+                        {# Browser-level required aur 5000-character limit; API ki validation routes.py mein alag hai. #}
                         <textarea id="message" name="message" maxlength="5000" required aria-describedby="messageHint" placeholder="Paste the message you want to check…"></textarea>
                         <div class="input-meta" id="messageHint">
                             <span>Enter to scan · Shift + Enter for a new line</span>
@@ -67,32 +80,40 @@
                         <span class="button-icon" aria-hidden="true">✦</span>
                         <span class="button-label">Scan message</span>
                     </button>
+                    {# Hidden error area; JavaScript failure par text set karke dikhata hai, role=alert announcement deta hai. #}
                     <p class="form-error" id="formError" role="alert" hidden></p>
                 </form>
             </section>
 
+            {# Recent results section; server se initial history render hoti hai. #}
             <aside class="panel results-panel" aria-labelledby="resultsTitle">
                 <div class="panel-heading compact">
                     <div>
                         <span class="section-label">Recent scans</span>
                         <h2 id="resultsTitle">Analysis results</h2>
                     </div>
+                    {# Jinja history khaali hone par Clear button ko hidden rakhta hai. #}
                     <button class="text-button" id="clearHistory" type="button" {% if not history %}hidden{% endif %}>Clear</button>
                 </div>
 
+                {# aria-live polite new result updates screen reader ko bina current speech interrupt kiye batata hai. #}
                 <div class="history-list" id="historyList" aria-live="polite">
+                    {# Jinja condition: results hain to loop se cards banao, warna empty state dikhao. #}
                     {% if history %}
+                        {# Har result mein color class, verdict, source, original message aur reason render hota hai. #}
                         {% for item in history %}
                         <article class="result-card result-{{ item.alert_class }}">
                             <div class="result-topline">
                                 <span class="verdict">{{ item.status }}</span>
                                 <span class="source">{{ item.source|default('analysis') }}</span>
                             </div>
+                            {# Jinja HTML autoescaping user text ko markup ki tarah execute hone se bachata hai. #}
                             <p class="scanned-message">{{ item.text }}</p>
                             <div class="reason-row">
                                 <span aria-hidden="true">{% if item.status == 'LEGIT' %}✓{% else %}!{% endif %}</span>
                                 <p>{{ item.reason }}</p>
                             </div>
+                            {# Confidence defined aur non-null ho tabhi 0-1 score ko percentage/bar mein dikhao. #}
                             {% if item.confidence is defined and item.confidence is not none %}
                             <div class="confidence"><span style="width: {{ (item.confidence * 100)|round|int }}%"></span></div>
                             <small>{{ (item.confidence * 100)|round|int }}% model confidence</small>
@@ -110,6 +131,7 @@
             </aside>
         </div>
 
+        {# Feature summary aur neeche usage disclaimer; yeh static page content hai. #}
         <section class="trust-strip" aria-label="Detection information">
             <div><strong>Hybrid detection</strong><span>AI model plus fraud phrase checks</span></div>
             <div><strong>Explainable verdicts</strong><span>See why a message was flagged</span></div>
@@ -118,6 +140,7 @@
         <p class="disclaimer">SafeGuard AI is a decision-support tool. Never share OTPs, passwords, or banking credentials based only on an automated result.</p>
     </main>
 
+    {# defer se DOM parse hone ke baad app.js chalta hai, isliye querySelector ko page elements milte hain. #}
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </body>
 </html>

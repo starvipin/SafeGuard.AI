@@ -1,5 +1,7 @@
+# Website code ko HF Docker Space tak sync karo; trained MODEL upload step 04 se alag hai.
 name: Sync to Hugging Face Docker Space
 
+# Main branch push ya manual run se sync shuru hota hai; CI success ka wait is workflow mein configured nahi.
 on:
   workflow_dispatch:
   push:
@@ -10,15 +12,21 @@ jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
+      # Repository aur complete Git history checkout karo; LFS files bhi download hon.
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # 0 ka matlab full history; default shallow checkout ki limit yahan nahi lagti.
           fetch-depth: 0
           lfs: true # large file
 
+      # Code/Dockerfile HF Space mein push honge; uske baad Docker build HF ki side par hota hai.
       - name: Push Code and Dockerfile to Hugging Face
+        # HF_TOKEN GitHub repository secret se aata hai; YAML mein actual token hard-code nahi hai.
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        # Neeche shell commands sequence mein chalti hain: Git identity, HF remote, phir force push.
+        # NOTE: Neeche ka existing --force HF main ko current checkout se replace kar sakta hai; yeh remote write hai.
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"

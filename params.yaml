@@ -1,12 +1,24 @@
+# Model pipeline ki settings; sab relative paths project root se commands chalane par resolve hote hain.
+# Step 01 ke source aur prepared-data output ka configuration.
 data_source:
+  # Original dataset: text aur label columns; 0=legit, 1=fraud.
   local_path: data/raw_data/fraud_dataset.csv
+  # Prepared dataset ko rakhne wala folder.
   raw_data_dir: data/raw_data
+  # Step 01 ki output file; steps 02/03 isi prepared file ko padhte hain.
   dataset_name: dataset.csv
 
+# Training hyperparameters aur model output location.
 train:
+  # Hugging Face ka pretrained base model/tokenizer jise fine-tune karenge.
   model_name: distilbert-base-uncased
+  # Final weights/config/tokenizer yahan save honge; nayi training is folder ko update kar sakti hai.
   model_output_dir: models/fraud_model_final
+  # Ek training/evaluation batch mein 4 examples process honge; memory usage par asar padta hai.
   batch_size: 4
+  # Poore training split par 3 passes honge.
   epochs: 3
+  # 5e-5 = 0.00005; optimizer update ka step size, training code float mein convert karta hai.
   learning_rate: 5e-5
+  # Har 500 training batches par temporary checkpoint; 0 par intermediate checkpoints off.
   save_steps: 500

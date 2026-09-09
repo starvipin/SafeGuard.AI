@@ -1,9 +1,15 @@
+# Docker build context se in paths ko exclude karo, taaki image mein local environment/secrets/data na copy hon.
+# Git history aur local virtual environment container ko nahi chahiye.
 .git
 .venv
+# Generated Python bytecode ko source build context se hatao.
 __pycache__
+# Local model/data include nahi honge; default app missing local model ko HF se download kar sakti hai.
 models/
 data/
+# Local secrets image mein bake mat karo; deployment environment se values milengi.
 .env
+# Tests, GitHub workflow files, root README aur local metrics runtime image ke liye exclude hain.
 tests/
 .github/
 README.md

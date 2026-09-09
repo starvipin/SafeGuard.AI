@@ -23,6 +23,10 @@ Website chalane par training nahi hoti. Step 04 trained model HF **model reposit
 
 ## Simple file structure
 
+Code mein Roman Hindi comments diye hain. Pehle har file ka top comment padho, phir function/block ke upar ka explanation. Website ka reading order: `app.py` → `src/web_app/__init__.py` → `settings.py` → `routes.py` → `fraud_detector.py` → result/history → HTML/CSS/JS. Training mein steps 01 se 04 padho; shared functions `pipeline_helpers.py` mein hain. Tests mein comments batate hain ki kaunsa behavior verify ho raha hai.
+
+`metrics.json` generated scores rakhti hai: accuracy = overall sahi labels ka proportion, F1 = fraud precision/recall ka balance, ROC AUC = fraud scores ki ranking quality. JSON comments support nahi karta. `uv.lock` uv ka generated exact dependency record hai, `.python-version` Python version select karta hai; inka format preserve kiya gaya hai. Model weights, datasets aur `.env` mein explanatory comments insert nahi kiye gaye hain.
+
 ```text
 SafeGuard.AI/
 ├── README.md                         ← Pehle yeh padho
