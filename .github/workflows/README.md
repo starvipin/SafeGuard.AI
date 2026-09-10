@@ -1,23 +1,23 @@
-# GitHub Actions: tests aur website deployment
+# GitHub Actions: tests and website deployment
 
-GitHub workflow YAML files `.github/workflows/` mein discover karta hai, isliye Actions yahin rakhe hain.
+GitHub discovers workflow YAML files under `.github/workflows/`, so the workflows remain in this directory.
 
-| File | Kab chalti hai? | Kya karti hai? |
+| File | Trigger | Action |
 | --- | --- | --- |
-| `ci.yml` | `main`/`develop` push, un branches ke PRs, manual run | Locked dependencies → syntax check → pytest |
-| `deploy.yml` | `main` push ya manual run | Website code aur Dockerfile ko `sainivipin/SafeGuard-Live` HF Space par sync |
+| `ci.yml` | Push to `main`/`develop`, PRs targeting those branches, or manual run | Install locked dependencies → check syntax → run pytest |
+| `deploy.yml` | Push to `main` or manual run | Sync website code and Dockerfile to the `sainivipin/SafeGuard-Live` HF Space |
 
 ```text
-GitHub main par push
+Push to GitHub main
   ├── ci.yml → tests
-  └── deploy.yml → HF Space ko code push → Docker build → app.py → website
+  └── deploy.yml → push code to HF Space → Docker build → app.py → website
 ```
 
-Existing CI aur deploy independent workflows hain. Deploy CI result ka wait nahi karta. Deployment workflow ke triggers aur push behavior restructuring mein change nahi kiye gaye.
+CI and deployment are independent workflows. Deployment does not wait for the CI result. The existing deployment triggers and push behavior are preserved.
 
-`deploy.yml` GitHub secret `HF_TOKEN` use karta hai. `Dockerfile` root `app.py` chalata hai, port `5000` par. `docker-compose.yml` local container ke liye hai. Existing deployment entrypoints preserve karne ke liye dono root mein hain.
+`deploy.yml` reads the GitHub secret `HF_TOKEN`. The root `Dockerfile` runs `app.py` on port `5000`; `docker-compose.yml` supports local container execution. These files remain in the root to preserve deployment entrypoints.
 
-- `src/model_training/step_04_upload_to_hf.py` → trained model HF **model repo** mein.
-- `deploy.yml` → website code HF **Space** mein.
+- `src/model_training/step_04_upload_to_hf.py` uploads trained model files to an HF **model repository**.
+- `deploy.yml` sends website code to an HF **Space**.
 
-Local folders organize karne se deployment nahi hota. `main` par push ya manual deploy workflow run live site update karta hai.
+Organizing local files does not deploy them. A push to `main` or a manual deployment workflow run syncs code to the live Space.

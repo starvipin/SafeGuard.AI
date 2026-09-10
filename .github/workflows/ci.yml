@@ -1,56 +1,56 @@
-# GitHub Actions CI: code syntax aur tests check hote hain; yeh workflow live site deploy nahi karta.
+# GitHub Actions CI checks syntax and tests; this workflow does not deploy the live website.
 name: Continuous Integration
 
-# Yahan triggers define hain: matching push/PR event ya GitHub Actions se manual Run workflow.
+# Run on matching push/PR events or through the manual Run workflow action.
 on:
-  # Manual run ke liye button enable karta hai.
+  # Enable manual workflow runs from GitHub Actions.
   workflow_dispatch:
-  # Sirf main aur develop par push hone se yeh CI automatic chalegi.
+  # Automatically run CI only for pushes to main or develop.
   push:
     branches: [main, develop]
-  # PR ki target/base branch main ya develop ho to open/update/reopen events par CI chalti hai.
+  # Run for opened, updated, or reopened PRs whose target branch is main or develop.
   pull_request:
     branches: [main, develop]
 
-# Workflow ko repository read access chahiye; source code push karne ka write access nahi.
+# Grant read access to the repository; this workflow does not need permission to push code.
 permissions:
   contents: read
 
-# Same workflow/ref ki nayi run aane par purani ongoing run cancel karke resources bachao.
+# Cancel an older in-progress run when a newer run uses the same workflow and ref.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # Is job ke steps same Ubuntu runner par sequence mein chalte hain.
+  # Execute this job's steps sequentially on the same Ubuntu runner.
   test:
     runs-on: ubuntu-latest
-    # Job 20 minutes se zyada le to GitHub use timeout karega.
+    # Stop the job if it runs longer than 20 minutes.
     timeout-minutes: 20
 
     steps:
-      # Repository files runner ke workspace mein lao.
+      # Check out repository files into the runner's workspace.
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # Runner par project ke liye Python 3.12 select karo.
+      # Select Python 3.12 for the project.
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
 
-      # uv dependency/environment manager install karo.
+      # Install uv to manage dependencies and the Python environment.
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      # uv.lock ke versions install karo; --frozen lockfile update nahi karta.
+      # Install versions from uv.lock; --frozen does not update the lockfile.
       - name: Install locked dependencies
         run: uv sync --frozen
 
-      # Python files compile karke syntax errors pakdo; scripts ki training/upload functions execute nahi hoti.
+      # Compile Python files to catch syntax errors without executing training or upload functions.
       - name: Check Python syntax
         run: uv run python -m compileall -q app.py src tests
 
-      # Pytest suite chalegi; failed test par CI fail hoti hai.
+      # Run the pytest suite; a failing test causes CI to fail.
       - name: Run test suite
         run: uv run pytest -q

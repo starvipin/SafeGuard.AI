@@ -1,4 +1,4 @@
-# Notebook cells ko temporary project aur tiny model se test karo; real training/HF upload nahi hota.
+# Test notebook cells with a temporary project and tiny model, without real model training or HF upload.
 import json
 from pathlib import Path
 import sys
@@ -19,7 +19,7 @@ NOTEBOOKS = ROOT / "src" / "model_training"
 
 
 def execute_notebook(filename):
-    # Notebook source mein outputs/token/data save nahi hone chahiye.
+    # Committed notebooks must not contain saved outputs that might expose data or credentials.
     notebook = nbformat.read(NOTEBOOKS / filename, as_version=4)
     nbformat.validate(notebook)
     namespace = {"__name__": "__notebook__"}
@@ -33,7 +33,7 @@ def execute_notebook(filename):
 
 @pytest.mark.parametrize("start_in_notebook_folder", [False, True])
 def test_notebooks_train_save_and_evaluate_cell_by_cell(tmp_path, monkeypatch, start_in_notebook_folder):
-    # Root aur nested notebook folder, dono launch locations se path detection verify hoti hai.
+    # Verify project-root detection when launched from either the root or the nested notebook directory.
     notebook_dir = tmp_path / "src" / "model_training"
     notebook_dir.mkdir(parents=True)
     data_dir = tmp_path / "data"
@@ -108,7 +108,7 @@ def test_notebooks_train_save_and_evaluate_cell_by_cell(tmp_path, monkeypatch, s
     assert (tmp_path / "models" / "custom-model" / "config.json").is_file()
     assert not list((tmp_path / "models").glob("checkpoint-*"))
 
-    # Doosri notebook bhi nested folder se independently setup kar sake.
+    # The evaluation notebook must independently set up its paths from the nested directory.
     monkeypatch.chdir(notebook_dir if start_in_notebook_folder else tmp_path)
     evaluated = execute_notebook("step_03_evaluate_model.ipynb")
     assert evaluated["PROJECT_ROOT"] == tmp_path
@@ -118,5 +118,5 @@ def test_notebooks_train_save_and_evaluate_cell_by_cell(tmp_path, monkeypatch, s
     assert model_loads[-1] == (
         tmp_path / "models" / "custom-model", {"local_files_only": True},
     )
-    assert model.training_batches == 8  # Evaluation mein koi training batch nahi chala.
+    assert model.training_batches == 8  # Evaluation must not run any additional training batches.
     hub.assert_not_called()

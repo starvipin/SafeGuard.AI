@@ -1,4 +1,4 @@
-# Pytest ke reusable fixtures: temporary config, sample messages aur fake model/tokenizer yahan milte hain.
+# Reusable pytest fixtures provide temporary configuration, sample messages, and fake model/tokenizer objects.
 import pytest
 import tempfile
 import os
@@ -7,25 +7,25 @@ import sys
 import yaml
 from unittest.mock import MagicMock
 
-# Tests mein pandas ke Python string storage ko prefer karte hain.
+# Prefer Python-backed string storage for pandas during tests.
 os.environ.setdefault("PANDAS_STRING_STORAGE", "python")
 os.environ.setdefault("PANDAS_FUTURE_INFER_STRING", "0")
 
 
-# Windows test environment mein pyarrow native-import issue se bachne ke liye uske imports block hote hain.
+# Block pyarrow imports to avoid native import issues in the Windows test environment.
 class _BlockPyArrow(importlib.abc.MetaPathFinder):
-    # PyArrow import aaye to ModuleNotFoundError do; baaki imports ko normal process hone do.
+    # Raise ModuleNotFoundError for pyarrow and let other imports proceed normally.
     def find_spec(self, fullname, path, target=None):
         if fullname == "pyarrow" or fullname.startswith("pyarrow."):
             raise ModuleNotFoundError("pyarrow is disabled during tests")
         return None
 
 
-# Yeh import hook test process mein pehle check hota hai; production app mein nahi lagta.
+# Install this import hook in the test process only; production does not use it.
 sys.meta_path.insert(0, _BlockPyArrow())
 
 @pytest.fixture
-# Fixture ek temporary YAML banata hai; test ko path deta hai aur test ke baad file delete karta hai.
+# Create temporary YAML configuration, provide its path to the test, then delete it afterward.
 def temp_config():
     """Create a temporary config file for testing."""
     config = {
@@ -48,17 +48,17 @@ def temp_config():
         yaml.dump(config, f)
         config_path = f.name
 
-    # yield se pehle setup, uske baad cleanup; pytest test complete hone par execution yahan resume karta hai.
+    # Code before yield performs setup; pytest resumes after yield to perform cleanup.
     yield config_path
 
-    # Cleanup
+    # Cleanup.
     os.unlink(config_path)
 
 @pytest.fixture
-# Chhote sample dataset mein 1 fraud aur 0 legit label hai; real user data ki zaroorat nahi.
+# Build a small sample dataset with label 1 for fraud and 0 for legitimate messages.
 def sample_data():
     """Create sample fraud data for testing."""
-    # Lazy import to avoid access violation on Windows
+    # Import pandas lazily to avoid native access violations on Windows.
     import pandas as pd
 
     data = {
@@ -76,7 +76,7 @@ def sample_data():
     return df
 
 @pytest.fixture
-# MagicMock fake token IDs/masks deta hai, isliye tokenizer download nahi karna padta.
+# Return fake token IDs and masks without downloading a tokenizer.
 def mock_tokenizer():
     """Mock tokenizer for testing."""
     mock = MagicMock()
@@ -87,7 +87,7 @@ def mock_tokenizer():
     return mock
 
 @pytest.fixture
-# Fake model output tests ko predictable banata hai; asli model inference yahan nahi chalti.
+# Provide predictable fake model outputs instead of running real inference.
 def mock_model():
     """Mock model for testing."""
     mock = MagicMock()

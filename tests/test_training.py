@@ -1,4 +1,4 @@
-# Training ke reusable parts: config, tensor conversion, single-class metrics aur checkpoint cleanup.
+# Check training helpers: configuration, tensor conversion, single-class metrics, and checkpoint cleanup.
 import pandas as pd
 import torch
 
@@ -6,13 +6,13 @@ from src.model_training.pipeline_helpers import classification_metrics, load_con
 from src.model_training.step_02_train_model import FraudDataset, cleanup_checkpoints
 
 
-# Config se base model ka naam sahi read ho raha hai.
+# Verify that configuration provides the expected base model name.
 def test_training_config_can_be_loaded(temp_config):
     config = load_config(temp_config)
     assert config["train"]["model_name"] == "distilbert-base-uncased"
 
 
-# Non-contiguous labels index [8,9] ke bawajood second encoding ko second label milna chahiye.
+# Non-contiguous label indices [8, 9] must still align the second encoding with the second label.
 def test_fraud_dataset_builds_tensors():
     dataset = FraudDataset(
         {
@@ -27,13 +27,13 @@ def test_fraud_dataset_builds_tensors():
     assert dataset[1]["labels"].item() == 1
 
 
-# Sirf ek true class ho to accuracy/F1 valid hain aur ROC AUC ka configured fallback 0.0 hai.
+# With one true class, accuracy and F1 remain valid while ROC AUC uses the configured 0.0 fallback.
 def test_classification_metrics_handles_single_class():
     metrics = classification_metrics([1, 1], [1, 1], [0.9, 0.8])
     assert metrics == {"accuracy": 1.0, "f1_score": 1.0, "roc_auc": 0.0}
 
 
-# Temporary checkpoint directories hatni chahiye; final model directory bachni chahiye.
+# Remove temporary checkpoint directories while preserving the final model directory.
 def test_cleanup_checkpoints_only_removes_checkpoints(tmp_path):
     checkpoint_one = tmp_path / "checkpoint-100"
     checkpoint_two = tmp_path / "checkpoint-200"

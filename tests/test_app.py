@@ -1,4 +1,4 @@
-# Website aur fraud detector ke behavior checks; mock predictions se real HF downloads avoid hote hain.
+# Check website and detector behavior using mocked predictions to avoid real HF downloads.
 from unittest.mock import patch
 
 import pytest
@@ -9,20 +9,20 @@ from src.web_app.fraud_detector import FraudDetector
 
 
 @pytest.fixture
-# Har test ke liye TESTING mode mein fresh app; history limit 2 rakhkar boundary aasani se check hoti hai.
+# Create a fresh test application with a history limit of two to exercise its boundary.
 def application():
     return create_app({"TESTING": True, "HISTORY_LIMIT": 2})
 
 
 @pytest.fixture
-# Flask test client bina real port/server start kiye HTTP requests simulate karta hai.
+# Flask's test client simulates HTTP requests without starting a server or opening a port.
 def client(application):
     return application.test_client()
 
 
-# Keyword fallback aur empty message handling ka group.
+# Group checks for keyword fallback and empty-message handling.
 class TestFraudDetector:
-    # Model load ko False stub karke verify karo ki risky phrases par WARNING milta hai.
+    # Stub model loading to fail and verify that risky phrases produce WARNING.
     def test_keyword_fallback_warns_for_risky_message(self, tmp_path):
         detector = FraudDetector(tmp_path, "owner/model", "model.safetensors")
         with patch.object(detector, "load_model", return_value=False):
@@ -32,7 +32,7 @@ class TestFraudDetector:
         assert result.source == "keywords"
         assert "click here" in result.reason
 
-    # Safe message par expected keyword-only Prediction object milna chahiye.
+    # Verify that a safe message produces the expected keyword-only Prediction.
     def test_keyword_fallback_accepts_safe_message(self, tmp_path):
         detector = FraudDetector(tmp_path, "owner/model", "model.safetensors")
         with patch.object(detector, "load_model", return_value=False):
@@ -45,22 +45,22 @@ class TestFraudDetector:
             source="keywords",
         )
 
-    # Sirf spaces wali input ko detector reject karta hai.
+    # Reject input that contains only whitespace.
     def test_empty_message_is_rejected(self, tmp_path):
         detector = FraudDetector(tmp_path, "owner/model", "model.safetensors")
         with pytest.raises(ValueError, match="cannot be empty"):
             detector.predict("   ")
 
 
-# HTML, JSON API, history aur health endpoints ka group.
+# Group checks for HTML, JSON, history, and health endpoints.
 class TestWebApplication:
-    # GET / se 200 aur page title milna template location sahi hone ka check hai.
+    # A successful home-page response and title verify that the template can be located.
     def test_index_renders(self, client):
         response = client.get("/")
         assert response.status_code == 200
         assert b"SafeGuard AI" in response.data
 
-    # Fake FRAUD verdict ke saath HTML form submit karo; message page mein dikhna chahiye.
+    # Submit an HTML form with a mocked FRAUD verdict and check that the message appears.
     def test_form_analysis_adds_history(self, client, application):
         detector = application.extensions["fraud_detector"]
         with patch.object(
@@ -73,7 +73,7 @@ class TestWebApplication:
         assert response.status_code == 200
         assert b"Test fraud message" in response.data
 
-    # Blank JSON message ko 400, valid message ko mocked verdict ke saath 200 milna chahiye.
+    # Expect HTTP 400 for blank JSON input and HTTP 200 with the mocked verdict for valid input.
     def test_json_api_validates_and_analyzes(self, client, application):
         empty_response = client.post("/api/v1/analyze", json={"message": " "})
         assert empty_response.status_code == 400
@@ -89,7 +89,7 @@ class TestWebApplication:
         assert response.status_code == 200
         assert response.get_json()["status"] == "LEGIT"
 
-    # 3 scans aur limit 2: latest do results bachne chahiye; clear API unhe khaali kare.
+    # After three scans with a limit of two, retain the latest two; the clear endpoint must empty the store.
     def test_history_is_bounded_and_can_be_cleared(self, client, application):
         detector = application.extensions["fraud_detector"]
         with patch.object(
@@ -107,7 +107,7 @@ class TestWebApplication:
         assert response.status_code == 200
         assert application.extensions["analysis_history"].snapshot() == []
 
-    # Health request model load kiye bina status de; startup lightweight rehna chahiye.
+    # Health checks must report status without loading the model.
     def test_health_does_not_load_model(self, client):
         response = client.get("/health")
         assert response.status_code == 200

@@ -1,6 +1,6 @@
-# Git ko batata hai kaun se untracked/generated/local files commit list se ignore karne hain; tracked files automatically untrack nahi hote.
-# Python-generated files
-# Python caches, test reports aur build outputs dobara generate ho sakte hain.
+# Ignore untracked generated and local files; these rules do not automatically untrack committed files.
+# Python-generated files.
+# Python caches, test reports, and build outputs can be regenerated.
 __pycache__/
 *.py[oc]
 .pytest_cache/
@@ -13,20 +13,20 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
-# Local dependency environment machine-specific hai; repo mein commit nahi karte.
+# Virtual environments.
+# The local dependency environment is machine-specific and should not be committed.
 .venv/
-# Local tokens/passwords/settings ko source control se bahar rakho.
+# Keep local tokens, passwords, and settings out of source control.
 .env
 
-# Local notes
-# Local notes ki files ignore ki gayi hain.
+# Local notes.
+# Ignore local planning notes.
 road_map.txt
 
-# Generated ML artifacts and local data
-# Model weights aur raw data artifacts source Git history mein include nahi karte.
+# Generated ML artifacts and local data.
+# Keep model weights and raw datasets out of the source Git history.
 models/
 data/
-# Personal preparation/notes files source code ka part nahi hain.
+# Personal preparation and notes files are not part of the application source.
 INTERVIEW_PREP.txt
 q&a.html

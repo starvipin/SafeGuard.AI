@@ -1,7 +1,7 @@
-# Website code ko HF Docker Space tak sync karo; trained MODEL upload step 04 se alag hai.
+# Sync website code to the HF Docker Space; trained-model publishing is a separate Step 04 operation.
 name: Sync to Hugging Face Docker Space
 
-# Main branch push ya manual run se sync shuru hota hai; CI success ka wait is workflow mein configured nahi.
+# Run on a main-branch push or manual dispatch; this workflow does not wait for CI success.
 on:
   workflow_dispatch:
   push:
@@ -12,27 +12,27 @@ jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-      # Repository aur complete Git history checkout karo; LFS files bhi download hon.
+      # Check out the repository with its full Git history and LFS files.
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # 0 ka matlab full history; default shallow checkout ki limit yahan nahi lagti.
+          # A depth of zero fetches the full history instead of a shallow checkout.
           fetch-depth: 0
           lfs: true # large file
 
-      # Code/Dockerfile HF Space mein push honge; uske baad Docker build HF ki side par hota hai.
+      # Push code and the Dockerfile to the HF Space; Hugging Face then builds the container.
       - name: Push Code and Dockerfile to Hugging Face
-        # HF_TOKEN GitHub repository secret se aata hai; YAML mein actual token hard-code nahi hai.
+        # Read HF_TOKEN from the GitHub repository secret instead of hard-coding the token in YAML.
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        # Neeche shell commands sequence mein chalti hain: Git identity, HF remote, phir force push.
-        # NOTE: Neeche ka existing --force HF main ko current checkout se replace kar sakta hai; yeh remote write hai.
+        # Run shell commands in order: configure Git identity, add the HF remote, then force-push.
+        # NOTE: The existing --force command can replace HF main with the current checkout; this writes to the remote.
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           
-          # Apna Hugging Face username aur Space name niche check kar lein
+          # Check the Hugging Face username and Space name in the destination below.
           git remote add hf https://sainivipin:$HF_TOKEN@huggingface.co/spaces/sainivipin/SafeGuard-Live
           
-          # Ye command aapka code Hugging Face par push kar degi
+          # Push the checked-out code to the Hugging Face Space.
           git push --force hf HEAD:main

@@ -1,4 +1,4 @@
-# STEP 03: saved model ko evaluate karo; yeh training ke same seed/split wala hold-out hai, naya unseen benchmark nahi.
+# STEP 03: evaluate the saved model on the same seeded hold-out split used during training, not a new benchmark.
 """Model evaluation stage."""
 
 from __future__ import annotations
@@ -19,25 +19,25 @@ from .pipeline_helpers import (
 )
 
 
-# Tokenized test messages aur true labels ko DataLoader ke liye tensor samples mein badlo.
+# Convert tokenized test messages and true labels into tensor samples for DataLoader.
 class EvaluationDataset(Dataset):
-    # Labels ka index reset karo, taaki tokenized rows se positional matching rahe.
+    # Reset label indices to keep them aligned with the tokenized rows.
     def __init__(self, encodings, labels):
         self.encodings = encodings
         self.labels = labels.reset_index(drop=True)
 
-    # Ek test sample ke input IDs, attention mask aur expected label return karo.
+    # Return one test sample's input IDs, attention mask, and expected label.
     def __getitem__(self, index):
         item = {name: torch.tensor(values[index]) for name, values in self.encodings.items()}
         item["labels"] = torch.tensor(self.labels.iloc[index])
         return item
 
-    # Evaluation dataset mein kitne samples hain, woh batao.
+    # Return the number of evaluation samples.
     def __len__(self):
         return len(self.labels)
 
 
-# Config aur prepared dataset padho; final output metrics dictionary aur metrics.json hai.
+# Read configuration and prepared data; return metrics and update metrics.json.
 def evaluate_model(config_path: str | Path = "params.yaml") -> dict[str, float]:
     config = load_config(config_path)
     frame = read_dataset(pipeline_data_path(config))
@@ -45,7 +45,7 @@ def evaluate_model(config_path: str | Path = "params.yaml") -> dict[str, float]:
     model_dir = Path(train_config.get("model_output_dir", "models/fraud_model_final"))
     batch_size = int(train_config.get("batch_size", 4))
 
-    # Training jaisa random_state=42 aur 20% test split; unused training portions ko _ mein ignore kiya hai.
+    # Recreate the training script's random_state=42 and 20% test split; discard the unused training portions.
     _, test_texts, _, test_labels = train_test_split(
         frame["text"],
         frame["label"],
@@ -54,33 +54,33 @@ def evaluate_model(config_path: str | Path = "params.yaml") -> dict[str, float]:
         stratify=frame["label"] if frame["label"].nunique() > 1 else None,
     )
 
-    # Step 02 ke saved folder se tokenizer aur classifier load karo.
+    # Load the tokenizer and classifier saved by Step 02.
     tokenizer = DistilBertTokenizerFast.from_pretrained(model_dir)
     model = DistilBertForSequenceClassification.from_pretrained(model_dir)
-    # GPU/CPU choose karke model ko wahan bhejo; eval mode training-only behavior band karta hai.
+    # Choose GPU or CPU, move the model there, and disable training-only behavior with eval().
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     model.eval()
 
-    # Saare test texts tokenize karo; DataLoader unhe batch_size ke groups mein deta hai.
+    # Tokenize test messages and group them into batches with DataLoader.
     encodings = tokenizer(list(test_texts), truncation=True, padding=True)
     loader = DataLoader(
         EvaluationDataset(encodings, test_labels), batch_size=batch_size, shuffle=False
     )
     predictions, probabilities, labels = [], [], []
-    # Sirf predictions chahiye; gradients aur optimizer updates nahi hote.
+    # Generate predictions without tracking gradients or updating weights.
     with torch.inference_mode():
         for batch in loader:
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
             batch_labels = batch["labels"].to(device)
-            # Har batch ke raw scores nikalo; argmax label aur softmax ka column 1 fraud score deta hai.
+            # Convert raw scores into predicted labels and fraud scores from softmax column 1.
             logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
             predictions.extend(torch.argmax(logits, dim=1).cpu().numpy())
             probabilities.extend(torch.softmax(logits, dim=1)[:, 1].cpu().numpy())
             labels.extend(batch_labels.cpu().numpy())
 
-    # Collected true labels aur predictions se accuracy/F1/AUC nikalo, phir file update karo.
+    # Calculate accuracy, F1, and ROC AUC from the collected results, then update the metrics file.
     metrics = classification_metrics(labels, predictions, probabilities)
     write_metrics(metrics)
     return metrics

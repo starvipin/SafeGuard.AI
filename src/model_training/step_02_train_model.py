@@ -1,4 +1,4 @@
-# STEP 02: prepared data se DistilBERT fine-tune karo, metrics nikalo aur model/tokenizer local save karo.
+# STEP 02: fine-tune DistilBERT on prepared data, calculate metrics, and save the model and tokenizer locally.
 """DistilBERT training stage for fraud-message classification."""
 
 from __future__ import annotations
@@ -22,25 +22,25 @@ from .pipeline_helpers import (
 )
 
 
-# DataLoader ko ek sample dene ke liye tokenized text aur true labels ko Dataset interface dete hain.
+# Implement the Dataset interface so DataLoader can retrieve tokenized samples and their true labels.
 class FraudDataset(Dataset):
-    # Split ke baad labels ke purane indices hatao; encodings ke positional indices se match karao.
+    # Reset label indices after splitting to match the positional indices of the encodings.
     def __init__(self, encodings, labels):
         self.encodings = encodings
         self.labels = labels.reset_index(drop=True)
 
-    # Index par ek sample ke input_ids, attention_mask aur label ko PyTorch tensors mein do.
+    # Return one sample's input IDs, attention mask, and label as PyTorch tensors.
     def __getitem__(self, index):
         item = {name: torch.tensor(values[index]) for name, values in self.encodings.items()}
         item["labels"] = torch.tensor(self.labels.iloc[index])
         return item
 
-    # DataLoader ko total samples ki sankhya chahiye.
+    # Tell DataLoader how many samples are available.
     def __len__(self):
         return len(self.labels)
 
 
-# Same seed se random split/training repeat karna aasaan hota hai; GPU par exact determinism guaranteed nahi.
+# A fixed seed improves repeatability of random operations; exact GPU determinism is not guaranteed.
 def set_reproducible_seed(seed: int = 42) -> None:
     random.seed(seed)
     torch.manual_seed(seed)
@@ -48,7 +48,7 @@ def set_reproducible_seed(seed: int = 42) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
-# Final save ke baad checkpoint-* folders hatao; model output ke parent folder mein search hoti hai.
+# After the final save, remove checkpoint-* directories from the model output's parent directory.
 def cleanup_checkpoints(checkpoint_root: str | Path) -> None:
     root = Path(checkpoint_root)
     if not root.exists():
@@ -58,9 +58,9 @@ def cleanup_checkpoints(checkpoint_root: str | Path) -> None:
             shutil.rmtree(path)
 
 
-# Training ke held-out samples par bina weights update kiye metrics nikalo.
+# Measure held-out performance without updating model weights.
 def _evaluate(model, loader, device) -> dict[str, float]:
-    # Training-mode dropout band karo; inference_mode neeche gradients bhi disable karta hai.
+    # Disable training-mode dropout; inference_mode below also disables gradient tracking.
     model.eval()
     predictions, probabilities, labels = [], [], []
     with torch.inference_mode():
@@ -69,18 +69,18 @@ def _evaluate(model, loader, device) -> dict[str, float]:
             attention_mask = batch["attention_mask"].to(device)
             batch_labels = batch["labels"].to(device)
             logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
-            # Winning labels aur fraud class (column 1) ke scores CPU arrays mein collect karo.
+            # Collect predicted labels and fraud-class scores (column 1) as CPU arrays.
             predictions.extend(torch.argmax(logits, dim=1).cpu().numpy())
             probabilities.extend(torch.softmax(logits, dim=1)[:, 1].cpu().numpy())
             labels.extend(batch_labels.cpu().numpy())
     return classification_metrics(labels, predictions, probabilities)
 
 
-# Config/data padho; return value metrics dictionary hai, model files disk par save hoti hain.
+# Read configuration and data; return a metrics dictionary and save model files to disk.
 def train_model(config_path: str | Path = "params.yaml") -> dict[str, float]:
     config = load_config(config_path)
     frame = read_dataset(pipeline_data_path(config))
-    # Model name, output path, batch size, epochs, learning rate aur checkpoint interval config se lo.
+    # Read the model, output path, batch size, epochs, learning rate, and checkpoint interval from configuration.
     settings = config["train"]
     model_name = settings["model_name"]
     model_output_dir = Path(settings.get("model_output_dir", "models/fraud_model_final"))
@@ -89,7 +89,7 @@ def train_model(config_path: str | Path = "params.yaml") -> dict[str, float]:
     learning_rate = float(settings["learning_rate"])
     save_steps = int(settings["save_steps"])
 
-    # 80% training aur 20% evaluation; stratify dono classes ka ratio roughly preserve karta hai.
+    # Use an 80/20 training/evaluation split; stratify approximately preserves class proportions.
     set_reproducible_seed()
     train_texts, test_texts, train_labels, test_labels = train_test_split(
         frame["text"],
@@ -99,11 +99,11 @@ def train_model(config_path: str | Path = "params.yaml") -> dict[str, float]:
         stratify=frame["label"] if frame["label"].nunique() > 1 else None,
     )
 
-    # Base model ka tokenizer text ko numbers mein badalta hai; padding lengths match aur truncation length limit rakhta hai.
+    # Tokenize text with the base model's tokenizer, padding lengths and truncating to the supported limit.
     tokenizer = DistilBertTokenizerFast.from_pretrained(model_name)
     train_encodings = tokenizer(list(train_texts), truncation=True, padding=True)
     test_encodings = tokenizer(list(test_texts), truncation=True, padding=True)
-    # Training batches shuffle hote hain; evaluation batches ka order fixed rehta hai.
+    # Shuffle training batches while keeping evaluation batches in a fixed order.
     train_loader = DataLoader(
         FraudDataset(train_encodings, train_labels), batch_size=batch_size, shuffle=True
     )
@@ -111,53 +111,53 @@ def train_model(config_path: str | Path = "params.yaml") -> dict[str, float]:
         FraudDataset(test_encodings, test_labels), batch_size=batch_size, shuffle=False
     )
 
-    # GPU mile to use karo; num_labels=2 ka matlab legit/fraud classifier.
+    # Choose GPU when available; num_labels=2 creates a legitimate/fraud classifier.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = DistilBertForSequenceClassification.from_pretrained(model_name, num_labels=2)
     model.to(device)
-    # AdamW gradients ke basis par model weights ko learning_rate ke hisaab se update karta hai.
+    # AdamW updates model weights using gradients and the configured learning rate.
     optimizer = AdamW(model.parameters(), lr=learning_rate)
 
-    # Intermediate checkpoints final model directory ke parent mein rakhe jate hain.
+    # Store intermediate checkpoints beside the final model directory.
     checkpoint_root = model_output_dir.parent
     checkpoint_root.mkdir(parents=True, exist_ok=True)
     global_step = 0
-    # Ek epoch mein poore training dataset ke batches ek baar process hote hain.
+    # Each epoch processes all training batches once.
     for epoch in range(epochs):
-        # Har epoch mein training mode on karo aur us epoch ka loss counter reset karo.
+        # Enable training mode and reset the epoch's loss counters.
         model.train()
         epoch_loss = 0.0
         batch_count = 0
         for batch in train_loader:
-            # Pichhle batch ke gradients clear karo; warna gradients add hote rahenge.
+            # Clear gradients from the previous batch so they do not accumulate.
             optimizer.zero_grad()
-            # Forward pass: text inputs aur true labels do; model logits aur loss deta hai.
+            # Forward pass: supply inputs and true labels to obtain logits and loss.
             outputs = model(
                 input_ids=batch["input_ids"].to(device),
                 attention_mask=batch["attention_mask"].to(device),
                 labels=batch["labels"].to(device),
             )
-            # Backward pass gradients nikalta hai; optimizer.step() unse weights update karta hai.
+            # Backpropagate the loss to compute gradients, then update weights with optimizer.step().
             outputs.loss.backward()
             optimizer.step()
             epoch_loss += float(outputs.loss.item())
             batch_count += 1
             global_step += 1
-            # Har save_steps batches par temporary checkpoint; 0 hone par intermediate saving band.
+            # Save a temporary checkpoint every save_steps batches; zero disables intermediate checkpoints.
             if save_steps > 0 and global_step % save_steps == 0:
                 model.save_pretrained(checkpoint_root / f"checkpoint-{global_step}")
-        # Batch losses ka average terminal par dikhao; training progress samajhne mein madad milti hai.
+        # Print the average batch loss to show training progress.
         average_loss = epoch_loss / max(batch_count, 1)
         print(f"Epoch {epoch + 1}/{epochs} - loss: {average_loss:.4f}")
 
-    # Training ke baad held-out split evaluate karo aur metrics.json mein scores likho.
+    # Evaluate the held-out split after training and write the metrics to metrics.json.
     metrics = _evaluate(model, test_loader, device)
     write_metrics(metrics)
     model_output_dir.mkdir(parents=True, exist_ok=True)
-    # Model weights/config aur tokenizer dono save karo; website ko prediction ke liye dono chahiye.
+    # Save both model weights/configuration and the tokenizer; the website requires both.
     model.save_pretrained(model_output_dir)
     tokenizer.save_pretrained(model_output_dir)
-    # Final files save hone ke baad temporary checkpoints clean karo; HF upload is step mein nahi hota.
+    # Clean temporary checkpoints after saving the final files; this stage does not upload to HF.
     cleanup_checkpoints(checkpoint_root)
 
     return metrics
@@ -169,6 +169,6 @@ def main() -> None:
     print(f"Stage 02 complete: model trained with metrics {metrics}")
 
 
-# Module import par training nahi chalegi; command line execution par hi main() chalega.
+# Importing this module does not train the model; command-line execution calls main().
 if __name__ == "__main__":
     main()

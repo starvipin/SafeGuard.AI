@@ -1,58 +1,58 @@
-# Docker image banane ka recipe; build mein environment taiyar hota hai, CMD container start par website chalata hai.
-# Lightweight Python 3.12 Linux image ko base bana rahe hain.
+# Build recipe: prepare the container environment during build and start the website with CMD at runtime.
+# Use a lightweight Python 3.12 Linux base image.
 FROM python:3.12-slim
 
-# Set environment variables
-# Logs turant output hon aur Python .pyc cache files na banaye.
+# Set environment variables.
+# Flush logs immediately and disable Python .pyc cache generation.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Install required system dependencies (if any)
-# Native Python dependencies compile karne ke liye build-essential install hota hai; package-list cache clean hoti hai.
+# Install required system dependencies.
+# Install build-essential for native dependencies and remove the package-list cache afterward.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv for fast dependency management
-# uv ke published image se uv/uvx binaries copy karte hain.
+# Install uv for fast dependency management.
+# Copy uv and uvx binaries from the published uv image.
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Create a non-root user (UID 1000 is required for Hugging Face Spaces)
-# Root ke bajay UID 1000 wala user banao; HF Space ke runtime layout ke saath compatible hai.
+# Create a non-root user with UID 1000 for Hugging Face Spaces.
+# Use a UID 1000 account compatible with the HF Space runtime instead of running as root.
 RUN useradd -m -u 1000 user
 
-# Set working directory
-# Aage ke relative COPY/RUN/CMD paths /app directory se resolve honge.
+# Set the working directory.
+# Resolve subsequent relative COPY, RUN, and CMD paths from /app.
 WORKDIR /app
 
-# Change ownership of the app directory to the new user
-# App directory non-root user ko writable banane ke liye ownership set karo.
+# Give the application directory to the new user.
+# Set ownership so the non-root user can write to the application directory.
 RUN chown user:user /app
 
-# Switch to the non-root user
-# Aage ke build commands aur container process is user ke roop mein chalenge.
+# Switch to the non-root user.
+# Run subsequent build commands and the container process as this user.
 USER user
 
-# Set PATH for the user so uv can be found if installed locally
-# User-local executable directory ko PATH mein rakho, taaki wahan installed commands mil sakein.
+# Make user-local executables discoverable through PATH.
+# Include the user-local binary directory so commands installed there can be found.
 ENV PATH="/home/user/.local/bin:$PATH"
 
-# Copy only the dependency files first (for better layer caching)
-# Dependency files pehle copy karne se sirf source code badalne par dependency layer reuse ho sakti hai.
+# Copy dependency files first for better layer caching.
+# Reuse the dependency layer when only application source code has changed.
 COPY --chown=user:user pyproject.toml uv.lock ./
 
-# Install dependencies using uv (creates a .venv inside /app)
-# Locked dependencies image ki .venv mein install karo; --no-dev dev dependency group skip karta hai.
+# Install dependencies into /app/.venv using uv.
+# Install locked dependencies; --no-dev skips the development dependency group.
 RUN uv sync --frozen --no-dev
 
-# Copy the rest of the application code
-# Bacha hua app source image mein copy karo; .dockerignore wale files include nahi hote.
+# Copy the remaining application source.
+# Exclude files listed in .dockerignore from the copied build context.
 COPY --chown=user:user . .
 
-# Expose the port the Flask app runs on
-# Container ka intended web port 5000 document hota hai; actual port mapping host/Compose karta hai.
+# Document the application port.
+# EXPOSE documents port 5000; the host or Compose configures actual port forwarding.
 EXPOSE 5000
 
-# Command to run the application using uv
-# Container start par uv environment ke Python se app.py chalti hai.
+# Run the application using uv.
+# Start app.py with the Python interpreter from the uv environment when the container launches.
 CMD ["uv", "run", "python", "app.py"]

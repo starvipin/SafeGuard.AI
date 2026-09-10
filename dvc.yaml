@@ -1,26 +1,26 @@
-# DVC pipeline ka order dependencies se banta hai: data preparation -> training -> evaluation. HF upload isme nahi hai.
+# Dependencies define the pipeline order: prepare data, train, then evaluate. HF upload is not included.
 stages:
-  # Step 01 source CSV se prepared dataset banata hai.
+  # Step 01 produces the prepared dataset from the source CSV.
   data_ingestion:
     cmd: python -m src.model_training.step_01_prepare_data
-    # Is stage ke source/config/data badlein to DVC stage ko out-of-date maan sakta hai.
+    # Changes to these source, configuration, or data files can make this stage out of date.
     deps:
       - src/model_training/pipeline_helpers.py
       - src/model_training/step_01_prepare_data.py
       - params.yaml
       - data/raw_data/fraud_dataset.csv
-    # Prepared dataset tracked output hai aur next training stage ka input banta hai.
+    # Track the prepared dataset as this stage's output and the next stage's input.
     outs:
       - data/raw_data/dataset.csv
 
-  # Step 02 prepared CSV se model train karke models/fraud_model_final save karta hai.
+  # Step 02 trains on the prepared CSV and saves models/fraud_model_final.
   training:
     cmd: python -m src.model_training.step_02_train_model
     deps:
       - src/model_training/pipeline_helpers.py
       - src/model_training/step_02_train_model.py
       - data/raw_data/dataset.csv
-    # Training ki in YAML values ke changes ko DVC dependency ke roop mein track karta hai.
+    # Track changes to these YAML training parameters as stage dependencies.
     params:
       - train.learning_rate
       - train.model_name
@@ -31,7 +31,7 @@ stages:
     outs:
       - models/fraud_model_final
 
-  # Step 03 saved model aur prepared data se scores nikalega.
+  # Step 03 evaluates the saved model using the prepared dataset.
   evaluation:
     cmd: python -m src.model_training.step_03_evaluate_model
     deps:
@@ -39,7 +39,7 @@ stages:
       - src/model_training/step_03_evaluate_model.py
       - models/fraud_model_final
       - data/raw_data/dataset.csv
-    # metrics.json ko comparison ke liye metric output declare karte hain; cache:false DVC cache mein store nahi karta.
+    # Declare metrics.json as a comparable metrics output; cache:false keeps it out of the DVC cache.
     metrics:
       - metrics.json:
           cache: false

@@ -1,28 +1,28 @@
-# Website ka flow
+# Website request flow
 
-Yahan website aur trained model se prediction ka code hai. Training `src/model_training/` mein hai.
+This package contains the website and inference code. Training lives in `src/model_training/`.
 
-1. Root `app.py` → `src/web_app/__init__.py` ka `create_app()` call karta hai.
-2. `settings.py` settings padhta hai; factory detector aur history objects register karti hai.
-3. Browser `GET /` bhejta hai → `routes.py` → `templates/index.html` render hota hai.
-4. Browser `/static/css/app.css` aur `/static/js/app.js` load karta hai.
-5. User scan karta hai → JavaScript JSON API ko call karta hai; HTML form POST bhi supported hai.
-6. `routes.py` → `fraud_detector.py` ka `predict()` call karta hai. First real scan par model load hota hai; local model missing ho to HF se download hota hai.
-7. AI prediction aur suspicious phrases se verdict banta hai. Model unavailable ho to keyword fallback chalta hai.
-8. `prediction_result.py` ka `Prediction` result format deta hai; `scan_history.py` result store karta hai; route response bhejta hai aur browser result dikhata hai.
+1. Root `app.py` calls `create_app()` from `src/web_app/__init__.py`.
+2. `settings.py` reads configuration; the factory registers the detector and history store.
+3. The browser requests `GET /`; `routes.py` renders `templates/index.html`.
+4. The browser loads `/static/css/app.css` and `/static/js/app.js`.
+5. When the user scans a message, JavaScript calls the JSON API. Regular HTML form submissions are also supported.
+6. `routes.py` calls `predict()` in `fraud_detector.py`. The model loads on the first real scan and downloads from HF if missing locally.
+7. Model predictions and suspicious phrases determine the verdict. Keyword fallback handles unavailable models.
+8. `prediction_result.py` defines the result format; `scan_history.py` stores it. The route responds, and the browser displays the result.
 
-| Kya badalna hai? | File |
+| What to change | File |
 | --- | --- |
 | Page content / HTML | `templates/index.html` |
-| Colors, spacing, design | `static/css/app.css` |
+| Colors, spacing, and layout | `static/css/app.css` |
 | Scan button / browser behavior | `static/js/app.js` |
-| Endpoint / request / response | `routes.py` |
-| Prediction / keywords / model loading | `fraud_detector.py` |
+| Endpoints / requests / responses | `routes.py` |
+| Predictions / keywords / model loading | `fraud_detector.py` |
 | Recent history | `scan_history.py` |
 | Result fields | `prediction_result.py` |
 | Environment settings | `settings.py` |
-| Flask setup | `__init__.py` |
+| Flask application setup | `__init__.py` |
 
-Run: project root se `uv run python app.py`. `/health` model load nahi karta. Files move hui hain, browser URLs ab bhi `/static/...` hain.
+Run `uv run python app.py` from the project root. The `/health` endpoint does not load the model. Static asset URLs remain `/static/...`.
 
-Runtime settings `.env`/environment se aati hain. Default model path project root ka `models/fraud_model_final/` hai. History current process ki memory mein rehti hai; restart par clear ho jati hai.
+Runtime settings come from the environment or `.env`. The default model location is `models/fraud_model_final/` under the project root. History is held in the current process's memory and clears when it restarts.

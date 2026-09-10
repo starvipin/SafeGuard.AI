@@ -1,4 +1,4 @@
-# Data preparation ke tests temporary folders use karte hain, project ke original dataset ko nahi badalte.
+# Use temporary folders to test data preparation without changing the project's original dataset.
 from pathlib import Path
 
 import pandas as pd
@@ -9,7 +9,7 @@ from src.model_training.pipeline_helpers import load_config, read_dataset
 from src.model_training.step_01_prepare_data import ingest_data
 
 
-# Test ke source/target paths ka YAML helper; har test isolated files bana sakta hai.
+# Build YAML with isolated source and target paths for each test.
 def write_config(path: Path, source: Path, target_dir: Path, name="dataset.csv") -> Path:
     path.write_text(
         yaml.safe_dump(
@@ -26,13 +26,13 @@ def write_config(path: Path, source: Path, target_dir: Path, name="dataset.csv")
     return path
 
 
-# YAML se expected dataset_name read ho raha hai ya nahi.
+# Verify that the expected dataset name is read from YAML.
 def test_load_config(temp_config):
     config = load_config(temp_config)
     assert config["data_source"]["dataset_name"] == "dataset.csv"
 
 
-# Do rows wali CSV copy karo aur output path plus data values verify karo.
+# Copy a two-row CSV and check both the output path and the resulting data.
 def test_ingest_data_copies_csv(tmp_path):
     source = tmp_path / "source.csv"
     pd.DataFrame({"text": ["hello", "claim now"], "label": [0, 1]}).to_csv(
@@ -50,7 +50,7 @@ def test_ingest_data_copies_csv(tmp_path):
     }
 
 
-# Source file missing ho to expected FileNotFoundError milna chahiye.
+# Expect FileNotFoundError when the source dataset is missing.
 def test_ingest_data_raises_for_missing_source(tmp_path):
     config_path = write_config(
         tmp_path / "params.yaml", tmp_path / "missing.csv", tmp_path / "data"
@@ -59,7 +59,7 @@ def test_ingest_data_raises_for_missing_source(tmp_path):
         ingest_data(config_path)
 
 
-# 0/1 ke bahar label 9 dene par validation error aana chahiye.
+# Verify that a label outside 0/1, such as 9, causes a validation error.
 def test_dataset_validation_rejects_invalid_labels(tmp_path):
     dataset = tmp_path / "dataset.csv"
     pd.DataFrame({"text": ["one", "two"], "label": [0, 9]}).to_csv(

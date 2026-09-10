@@ -1,2 +1,2 @@
-# src ke andar do alag packages hain: web_app website ke liye, model_training model banane ke liye.
+# The source contains two packages: web_app serves the website, and model_training builds the model.
 """Project source: web_app serves the website; model_training builds the model."""

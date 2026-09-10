@@ -1,8 +1,8 @@
-# Local Docker run ki definition; docker compose up --build se app container build/start hota hai.
+# Local container configuration; docker compose up --build builds and starts the application.
 services:
-  # app service project root ke Dockerfile se image banati hai.
+  # Build the app service from the Dockerfile in the project root.
   app:
     build: .
-    # Mapping host:container hai; localhost:5000 ki request container port 5000 par jayegi.
+    # The mapping is host:container; requests to localhost:5000 reach port 5000 inside the container.
     ports:
       - "5000:5000"

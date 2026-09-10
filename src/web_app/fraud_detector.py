@@ -1,4 +1,4 @@
-# Live prediction ka engine: zaroorat par trained model load karo, phir AI aur keywords se verdict do.
+# Live prediction engine: lazily load the trained model and combine its verdict with keyword signals.
 """Fraud detection service with lazy model loading and keyword fallback."""
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from .prediction_result import Prediction
 
 LOGGER = logging.getLogger(__name__)
 
-# Risky words/phrases ki list; match milna fraud ka pakka saboot nahi, warning ka signal hai.
+# These phrases indicate possible risk; a match is a warning signal, not proof of fraud.
 FRAUD_KEYWORDS = (
     "immediately", "24 hours", "tonight", "blocked", "suspended", "asap",
     "click here", "update kyc", "verify now", "call this number", "log in",
@@ -31,26 +31,26 @@ FRAUD_KEYWORDS = (
 )
 
 
-# Yeh class sirf inference karti hai; model ki training src/model_training mein hoti hai.
+# This class performs inference only; training is implemented in src/model_training.
 class FraudDetector:
     """Own model lifecycle and combine ML results with safety heuristics."""
 
-    # Model paths aur state save karo; heavy tokenizer/model abhi load nahi karte.
+    # Store paths and initial state without loading the heavy tokenizer or model yet.
     def __init__(self, model_dir: Path, model_repo: str, model_filename: str) -> None:
         self.model_dir = model_dir
         self.model_repo = model_repo
         self.model_filename = model_filename
         self.tokenizer = None
         self.model = None
-        # CUDA available ho to GPU, warna CPU; model aur input tensors same device par hone chahiye.
+        # After a failed load, this detector instance does not retry on every request.
         self.device = None
-        # Ek detector instance mein failed load ko har request par dobara try nahi karte.
+        # Protect downloading and loading when several requests arrive at the same time.
         self._load_attempted = False
-        # Multiple requests ek saath aayen to download/loading ko lock se protect karo.
+        # Convert Flask configuration values into constructor arguments.
         self._load_lock = Lock()
 
     @classmethod
-    # Flask config ko constructor ke arguments mein badalne ka helper.
+    # AI prediction is available only when both the model and tokenizer are present.
     def from_config(cls, config: Mapping) -> "FraudDetector":
         return cls(
             model_dir=Path(config["MODEL_DIR"]),
@@ -59,18 +59,18 @@ class FraudDetector:
         )
 
     @property
-    # Model aur tokenizer dono present hon tabhi AI prediction available hai.
+    # Reuse a loaded model; after a failed attempt, continue with keyword fallback.
     def model_available(self) -> bool:
         return self.model is not None and self.tokenizer is not None
 
-    # Pehle loaded model reuse karo; pehle attempt fail hua ho to keyword fallback par raho.
+    # Check state again after acquiring the lock because another request may have loaded the model.
     def load_model(self) -> bool:
         if self.model_available:
             return True
         if self._load_attempted:
             return False
 
-        # Lock milne ke baad state dobara check karo; doosri request model load kar chuki ho sakti hai.
+        # Import heavy libraries here to keep application startup and health checks lightweight.
         with self._load_lock:
             if self.model_available:
                 return True
@@ -79,7 +79,7 @@ class FraudDetector:
             self._load_attempted = True
 
             try:
-                # Heavy libraries yahin import hoti hain, isliye startup aur health endpoint halka rehta hai.
+                # If the weight file is missing, download the repository snapshot into the local model directory.
                 import torch
                 from huggingface_hub import snapshot_download
                 from transformers import (
@@ -87,7 +87,7 @@ class FraudDetector:
                     DistilBertTokenizerFast,
                 )
 
-                # Weight file missing ho to poora repository snapshot local model directory mein download karo.
+                # Use CUDA when available, otherwise CPU; model and input tensors must share a device.
                 model_path = self.model_dir / self.model_filename
                 if not model_path.exists():
                     self.model_dir.mkdir(parents=True, exist_ok=True)
@@ -100,18 +100,18 @@ class FraudDetector:
                     self.model_dir
                 )
                 self.model.to(self.device)
-                # Evaluation mode dropout jaise training-only behavior ko band karta hai.
+                # Evaluation mode disables training-only behavior such as dropout.
                 self.model.eval()
                 LOGGER.info("Fraud model loaded on %s", self.device)
                 return True
-            # Loading fail ho to log mein error rakho aur keyword detector se app ko result dene do.
+            # Log loading errors and allow the keyword detector to keep returning results.
             except Exception:
                 LOGGER.exception("Model unavailable; keyword fallback enabled")
                 self.tokenizer = None
                 self.model = None
                 return False
 
-    # Message saaf karo, model loading try karo, phir keyword aur AI signals combine karo.
+    # Trim the message, attempt model loading, then combine keyword and model signals.
     def predict(self, text: str) -> Prediction:
         normalized = text.strip()
         if not normalized:
@@ -119,27 +119,27 @@ class FraudDetector:
 
         self.load_model()
         keywords = self._find_keywords(normalized)
-        # AI unavailable ho to sirf phrases se WARNING ya LEGIT return hota hai.
+        # If AI is unavailable, return a keyword-only WARNING or LEGIT result.
         if not self.model_available:
             return self._keyword_prediction(keywords)
 
         import torch
 
-        # Text ko token IDs/attention mask mein badlo; truncation model ki length limit follow karta hai.
+        # Convert text into token IDs and an attention mask; truncation enforces the model's length limit.
         inputs = self.tokenizer(
             normalized, return_tensors="pt", truncation=True, padding=True
         )
         inputs = {name: value.to(self.device) for name, value in inputs.items()}
-        # Gradients store nahi hote: prediction ke liye memory aur calculation bachti hai.
+        # Disable gradient tracking to reduce memory use and computation during prediction.
         with torch.inference_mode():
             logits = self.model(**inputs).logits
-        # Logits raw scores hain; softmax unhe class scores mein, argmax winning label mein badalta hai.
+        # Logits are raw scores; softmax produces class scores, and argmax selects the winning label.
         probabilities = torch.softmax(logits, dim=1)
         label = int(torch.argmax(probabilities, dim=1).item())
-        # Confidence model ka score hai; ise real-world correctness ki guarantee mat samjho.
+        # Confidence is the model's score, not a guarantee of real-world correctness.
         confidence = float(probabilities[0, label].item())
 
-        # Label 1 par FRAUD. AI label 0 ho lekin risky phrases milen to hybrid WARNING.
+        # Label 1 produces FRAUD; label 0 with risky phrases produces a hybrid WARNING.
         if label == 1:
             return Prediction("FRAUD", "Detected by AI model", "danger", "model", confidence)
         if keywords:
@@ -153,13 +153,13 @@ class FraudDetector:
         return Prediction("LEGIT", "No suspicious pattern detected", "success", "model", confidence)
 
     @staticmethod
-    # casefold se capital/small letters ka fark hatao; phrase matching substring ke roop mein hoti hai.
+    # Ignore letter case with casefold and search for phrases as substrings.
     def _find_keywords(text: str) -> list[str]:
         lowered = text.casefold()
         return [keyword for keyword in FRAUD_KEYWORDS if keyword in lowered]
 
     @staticmethod
-    # Phrases milen to warning reason mein unhe dikhao; nahi milen to keyword-scan LEGIT do.
+    # Explain matching phrases in a warning; otherwise return a keyword-scan LEGIT result.
     def _keyword_prediction(keywords: list[str]) -> Prediction:
         if keywords:
             return Prediction(

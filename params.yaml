@@ -1,24 +1,24 @@
-# Model pipeline ki settings; sab relative paths project root se commands chalane par resolve hote hain.
-# Step 01 ke source aur prepared-data output ka configuration.
+# Model pipeline settings; resolve relative paths by running commands from the project root.
+# Configure the source and prepared-data output for Step 01.
 data_source:
-  # Original dataset: text aur label columns; 0=legit, 1=fraud.
+  # Original dataset with text and label columns: 0=legitimate, 1=fraud.
   local_path: data/raw_data/fraud_dataset.csv
-  # Prepared dataset ko rakhne wala folder.
+  # Directory containing the prepared dataset.
   raw_data_dir: data/raw_data
-  # Step 01 ki output file; steps 02/03 isi prepared file ko padhte hain.
+  # Step 01 output filename, read by Steps 02 and 03.
   dataset_name: dataset.csv
 
-# Training hyperparameters aur model output location.
+# Training hyperparameters and the model output location.
 train:
-  # Hugging Face ka pretrained base model/tokenizer jise fine-tune karenge.
+  # Pretrained Hugging Face base model and tokenizer to fine-tune.
   model_name: distilbert-base-uncased
-  # Final weights/config/tokenizer yahan save honge; nayi training is folder ko update kar sakti hai.
+  # Save final weights, configuration, and tokenizer here; another training run can update this directory.
   model_output_dir: models/fraud_model_final
-  # Ek training/evaluation batch mein 4 examples process honge; memory usage par asar padta hai.
+  # Process four examples per training/evaluation batch; this affects memory usage.
   batch_size: 4
-  # Poore training split par 3 passes honge.
+  # Make three passes through the training split.
   epochs: 3
-  # 5e-5 = 0.00005; optimizer update ka step size, training code float mein convert karta hai.
+  # 5e-5 equals 0.00005, the optimizer's step size; training converts it to a float.
   learning_rate: 5e-5
-  # Har 500 training batches par temporary checkpoint; 0 par intermediate checkpoints off.
+  # Save a temporary checkpoint every 500 training batches; zero disables intermediate checkpoints.
   save_steps: 500

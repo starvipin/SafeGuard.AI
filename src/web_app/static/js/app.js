@@ -1,5 +1,5 @@
-// Browser ka flow: theme restore karo, message API ko bhejo, response se result card/history update karo.
-// HTML elements ko unke IDs se pakdo; neeche event handlers inhi references ko use karte hain.
+// Browser flow: restore the theme, submit messages to the API, then update result cards and history.
+// Find page elements by ID and reuse these references in the event handlers below.
 const root = document.documentElement;
 const form = document.querySelector("#analyzeForm");
 const messageInput = document.querySelector("#message");
@@ -11,34 +11,34 @@ const clearButton = document.querySelector("#clearHistory");
 const formError = document.querySelector("#formError");
 const themeToggle = document.querySelector("#themeToggle");
 
-// Pehle saved theme lo; nahi mili to operating system ki light/dark preference follow karo.
+// Prefer the saved theme; otherwise follow the operating system's light/dark preference.
 const storedTheme = localStorage.getItem("safeguard-theme");
 const preferredTheme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 root.dataset.theme = storedTheme || preferredTheme;
 
-// Button theme badalta hai aur localStorage mein save karta hai, taaki reload par choice yaad rahe.
+// Toggle the theme and save it in localStorage so the choice survives a reload.
 themeToggle.addEventListener("click", () => {
     const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
     root.dataset.theme = nextTheme;
     localStorage.setItem("safeguard-theme", nextTheme);
 });
 
-// Input ki current JavaScript string length counter mein dikhao.
+// Display the current JavaScript string length of the input.
 function updateCharacterCount() {
     characterCount.textContent = messageInput.value.length;
 }
 
-// Typing par counter refresh; Enter scan karta hai, Shift+Enter newline deta hai.
+// Update the counter while typing; Enter scans, while Shift+Enter inserts a new line.
 messageInput.addEventListener("input", updateCharacterCount);
 messageInput.addEventListener("keydown", (event) => {
-    // IME composition ke dauran Enter ko submit mat mano; disabled button se duplicate submit roko.
+    // Do not submit during IME composition; a disabled button also prevents duplicate requests.
     if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
         event.preventDefault();
         if (!analyzeButton.disabled) form.requestSubmit();
     }
 });
 
-// API result se DOM elements banao; alert_class card ka color aur source verdict ka origin batata hai.
+// Build DOM elements from the API result; alert_class controls color and source identifies the verdict's origin.
 function resultCard(result) {
     const article = document.createElement("article");
     article.className = `result-card result-${result.alert_class}`;
@@ -47,7 +47,7 @@ function resultCard(result) {
     topline.className = "result-topline";
     const verdict = document.createElement("span");
     verdict.className = "verdict";
-    // Server/user text ko textContent se likho, taaki use executable HTML ki tarah parse na kiya jaye.
+    // Use textContent for server/user text so it is not interpreted as executable HTML.
     verdict.textContent = result.status;
     const source = document.createElement("span");
     source.className = "source";
@@ -58,7 +58,7 @@ function resultCard(result) {
     message.className = "scanned-message";
     message.textContent = result.text;
 
-    // Verdict ke saath icon aur explanation dikhao; decorative icon screen readers se hidden hai.
+    // Display an icon and explanation; hide the decorative icon from screen readers.
     const reasonRow = document.createElement("div");
     reasonRow.className = "reason-row";
     const reasonIcon = document.createElement("span");
@@ -70,7 +70,7 @@ function resultCard(result) {
 
     article.append(topline, message, reasonRow);
 
-    // Sirf numeric confidence par percentage/bar dikhao; keyword-only result mein yeh nahi dikhti.
+    // Show the percentage and bar only for numeric confidence, not keyword-only results.
     if (typeof result.confidence === "number") {
         const percent = Math.round(result.confidence * 100);
         const confidence = document.createElement("div");
@@ -86,14 +86,14 @@ function resultCard(result) {
     return article;
 }
 
-// Request chalne tak button disable aur label/spinner update karo.
+// Disable the button and update its label and spinner while the request is running.
 function setLoading(isLoading) {
     analyzeButton.disabled = isLoading;
     analyzeButton.classList.toggle("is-loading", isLoading);
     buttonLabel.textContent = isLoading ? "Analyzing threat signals…" : "Scan message";
 }
 
-// Form reload roko aur async JSON request se scan result lao.
+// Prevent a page reload and retrieve the result with an asynchronous JSON request.
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const message = messageInput.value.trim();
@@ -103,25 +103,25 @@ form.addEventListener("submit", async (event) => {
     formError.hidden = true;
 
     try {
-        // Message ko JSON body mein POST karo; await response aane tak isi async handler ko rokta hai.
+        // POST the message as JSON; await pauses this handler until the response arrives.
         const response = await fetch("/api/v1/analyze", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Accept": "application/json" },
             body: JSON.stringify({ message }),
         });
         const result = await response.json();
-        // HTTP failure ko readable error mein badlo; error neeche catch block mein dikhega.
+        // Convert HTTP failures into readable errors handled by the catch block below.
         if (!response.ok) throw new Error(result.error || "Analysis failed. Please try again.");
 
-        // Pehle scan par empty state hatao, naya card sabse upar lagao.
+        // Remove the empty state on the first scan and prepend the newest result card.
         document.querySelector("#emptyState")?.remove();
         historyList.prepend(resultCard(result));
-        // Browser DOM mein hard-coded maximum 10 cards rakhe hain; server ki HISTORY_LIMIT alag setting hai.
+        // The browser keeps at most 10 cards; the server's HISTORY_LIMIT is a separate setting.
         while (historyList.children.length > 10) historyList.lastElementChild.remove();
         clearButton.hidden = false;
         messageInput.value = "";
         updateCharacterCount();
-    // Network/server error ko form ke paas dikhao; finally success/failure dono mein button restore karta hai.
+    // Display network/server errors near the form; finally restores the button on success or failure.
     } catch (error) {
         formError.textContent = error.message;
         formError.hidden = false;
@@ -130,11 +130,11 @@ form.addEventListener("submit", async (event) => {
     }
 });
 
-// Clear par server history hatao, successful response ke baad browser list bhi khaali karo.
+// Clear server history first, then empty the browser list after a successful response.
 clearButton.addEventListener("click", async () => {
     clearButton.disabled = true;
     try {
-        // Accept JSON se route ko batate hain ki redirect ke bajay JSON response chahiye.
+        // Request JSON so the endpoint returns a JSON response instead of redirecting.
         const response = await fetch("/clear_history", {
             method: "POST",
             headers: { "Accept": "application/json" },
@@ -144,7 +144,7 @@ clearButton.addEventListener("click", async () => {
         const empty = document.createElement("div");
         empty.className = "empty-state";
         empty.id = "emptyState";
-        // Yeh fixed developer-written HTML hai; user ka message is innerHTML mein insert nahi hota.
+        // This is fixed developer-written HTML; user messages are not inserted through innerHTML.
         empty.innerHTML = '<span class="empty-icon" aria-hidden="true">⌁</span><h3>No scans yet</h3><p>Your latest results will appear here with a clear explanation.</p>';
         historyList.append(empty);
         clearButton.hidden = true;

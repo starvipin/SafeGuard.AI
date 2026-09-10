@@ -1,5 +1,5 @@
-/* Website ki styling: theme variables, layout, scan form, result cards, animations aur mobile rules. */
-/* Default dark theme ke reusable colors/shadow; var(--naam) se baaki rules inhe use karte hain. */
+/* Website styles: themes, layout, the scan form, result cards, animations, and responsive rules. */
+/* Define reusable dark-theme colors and shadows for the var(--name) references below. */
 :root {
     color-scheme: dark;
     --bg: #07110f;
@@ -18,7 +18,7 @@
     --shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
 }
 
-/* JavaScript data-theme=light lagaye to wahi variables light palette mein override hote hain. */
+/* Override the same variables with light colors when JavaScript sets data-theme=light. */
 [data-theme="light"] {
     color-scheme: light;
     --bg: #eef5f1;
@@ -37,13 +37,13 @@
     --shadow: 0 24px 70px rgba(35, 72, 59, 0.12);
 }
 
-/* Width/height mein border aur padding include karo, taaki layout calculation predictable rahe. */
+/* Include padding and borders in element dimensions to make layout sizing predictable. */
 * { box-sizing: border-box; }
 
-/* Page ke internal scrolling ko smooth banao; reduced-motion rule neeche ise override kar sakta hai. */
+/* Enable smooth scrolling; the reduced-motion rule below can override it. */
 html { scroll-behavior: smooth; }
 
-/* Page background, default font, full-screen minimum height aur theme-change transition. */
+/* Set the page background, default font, full-height layout, and theme transition. */
 body {
     min-height: 100vh;
     margin: 0;
@@ -54,11 +54,11 @@ body {
     transition: background-color 180ms ease, color 180ms ease;
 }
 
-/* Form elements bhi page ka font use karein; button par pointer cursor dikhe. */
+/* Use the page font for form controls and a pointer cursor for buttons. */
 button, textarea { font: inherit; }
 button { cursor: pointer; }
 
-/* Blurred decorative background circles fixed rehte hain aur clicks intercept nahi karte. */
+/* Decorative blurred circles stay fixed and do not intercept clicks. */
 .ambient {
     position: fixed;
     z-index: -1;
@@ -73,7 +73,7 @@ button { cursor: pointer; }
 .ambient-one { top: -12rem; left: -10rem; background: #36e6a7; }
 .ambient-two { right: -13rem; bottom: -15rem; background: #32a8dd; }
 
-/* Logo aur actions ko flex layout se opposite sides par rakho; content maximum width mein centered rahe. */
+/* Center the header within a maximum width and place its logo and actions on opposite sides. */
 .site-header {
     width: min(1180px, calc(100% - 40px));
     margin: 0 auto;
@@ -83,7 +83,7 @@ button { cursor: pointer; }
     justify-content: space-between;
 }
 
-/* Brand link ka text/icon alignment; neeche shield logo, border, glow aur SVG styling hai. */
+/* Style the brand text and icon, followed by shield borders, glow, and SVG details. */
 .brand { display: flex; gap: 13px; align-items: center; color: inherit; text-decoration: none; }
 .brand-mark {
     position: relative;
@@ -98,7 +98,7 @@ button { cursor: pointer; }
     box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 18%, transparent);
     animation: logo-glow 2.6s ease-in-out infinite;
 }
-/* Pseudo-element se logo ke bahar animated ring ban rahi hai, extra HTML element nahi chahiye. */
+/* Draw the animated outer logo ring with a pseudo-element instead of extra HTML. */
 .brand-mark::after {
     position: absolute;
     inset: -5px;
@@ -120,7 +120,7 @@ button { cursor: pointer; }
 .brand strong { display: block; font: 800 1rem/1.1 "Manrope", sans-serif; }
 .brand small { display: block; margin-top: 4px; color: var(--muted); font-size: 0.75rem; }
 
-/* Theme button aur status indicator ek row mein; online dot ka animation sirf visual indicator hai. */
+/* Align the status and theme button; the animated online dot is a visual indicator only. */
 .header-actions { display: flex; align-items: center; gap: 13px; }
 .system-status {
     display: flex;
@@ -147,7 +147,7 @@ button { cursor: pointer; }
     content: "";
     animation: status-ring 1.8s ease-out infinite;
 }
-/* Theme-toggle button ka size, border, background aur text color. */
+/* Set the theme button's dimensions, border, background, and text color. */
 .icon-button {
     width: 42px;
     height: 42px;
@@ -157,7 +157,7 @@ button { cursor: pointer; }
     color: var(--text);
 }
 
-/* Main content ki width/spacing; intro heading clamp() se screen ke hisaab se scale hoti hai. */
+/* Control main content spacing; clamp() scales the introduction heading to the screen. */
 .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 52px 0 36px; }
 .intro { max-width: 760px; margin-bottom: 42px; }
 .eyebrow, .section-label { color: var(--accent); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; }
@@ -165,9 +165,9 @@ button { cursor: pointer; }
 .intro h1 span { color: var(--accent); }
 .intro p { max-width: 650px; margin: 0; color: var(--muted); font-size: 1.05rem; line-height: 1.75; }
 
-/* Desktop par scanner aur results do columns mein; 900px media query neeche single column karti hai. */
+/* Use two desktop columns; the 900px media query changes them to a single column. */
 .workspace { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr); gap: 20px; align-items: start; }
-/* Dono panels ka common translucent background, rounded border aur shadow. */
+/* Apply shared translucent backgrounds, rounded borders, and shadows to both panels. */
 .panel {
     border: 1px solid var(--line);
     border-radius: 24px;
@@ -175,7 +175,7 @@ button { cursor: pointer; }
     box-shadow: var(--shadow);
     backdrop-filter: blur(18px);
 }
-/* Form/result panels ki padding, headings aur supporting text ki sizing. */
+/* Set panel padding and the sizing of headings and supporting text. */
 .scanner-panel { padding: 28px; }
 .results-panel { min-height: 473px; padding: 28px; }
 .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
@@ -183,19 +183,19 @@ button { cursor: pointer; }
 .panel-heading h2 { margin: 5px 0 0; font: 700 1.35rem/1.2 "Manrope", sans-serif; letter-spacing: -0.025em; }
 .privacy-note { color: var(--muted); font-size: 0.76rem; }
 
-/* Textarea container aur focus ring; focus-within kisi child input par focus hote hi active hota hai. */
+/* Style the input container and its focus ring when a child control has focus. */
 .input-wrap { overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: var(--surface-raised); transition: border-color 160ms ease, box-shadow 160ms ease; }
 .input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(94, 230, 178, 0.1); }
-/* Message input ki minimum height, padding, resize behavior aur readable line spacing. */
+/* Set the message input's minimum height, padding, resizing, and line spacing. */
 textarea { display: block; width: 100%; min-height: 225px; padding: 20px; resize: vertical; border: 0; outline: 0; background: transparent; color: var(--text); line-height: 1.65; }
 textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent); }
-/* Keyboard hint aur character counter ko input ke neeche opposite sides par dikhao. */
+/* Place the keyboard hint and character counter on opposite sides below the input. */
 .input-meta { display: flex; justify-content: space-between; padding: 11px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.72rem; }
 
-/* Clear-history jaise secondary action ka minimal button style. */
+/* Use a minimal style for secondary actions such as clearing history. */
 .text-button { border: 0; background: transparent; color: var(--accent); font-weight: 700; }
 
-/* Main scan button full width; hover, disabled aur loading states neeche define hain. */
+/* Make the scan button full width, with hover, disabled, and loading states below. */
 .primary-button {
     display: flex;
     margin-top: 20px;
@@ -216,35 +216,35 @@ textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent)
 .primary-button.is-loading .button-icon { animation: spin 900ms linear infinite; }
 .form-error { margin: 12px 0 0; color: var(--danger); font-size: 0.85rem; }
 
-/* Recent results vertical list mein; height limit ke baad andar scrollbar aata hai. */
+/* Lay out recent results vertically with internal scrolling after the height limit. */
 .history-list { display: grid; gap: 13px; max-height: 580px; overflow-y: auto; padding-right: 3px; }
 .result-card { position: relative; overflow: hidden; padding: 17px; border: 1px solid var(--line); border-radius: 17px; background: var(--surface-raised); animation: reveal 260ms ease both; }
-/* Card ke left mein status-color wali patli line; danger/warning/success classes color select karti hain. */
+/* Draw a thin status-colored line on each card; danger/warning/success classes choose its color. */
 .result-card::before { position: absolute; inset: 0 auto 0 0; width: 3px; content: ""; background: var(--status-color); }
 .result-danger { --status-color: var(--danger); }
 .result-warning { --status-color: var(--warning); }
 .result-success { --status-color: var(--success); }
-/* Verdict aur source badge ka alignment; message, explanation aur confidence styles iske baad hain. */
+/* Align verdicts and source badges, followed by message, explanation, and confidence styles. */
 .result-topline { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .verdict { color: var(--status-color); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; }
 .source { padding: 4px 7px; border-radius: 999px; background: color-mix(in srgb, var(--status-color) 10%, transparent); color: var(--muted); font-size: 0.66rem; text-transform: capitalize; }
-/* Long message ko card mein maximum 3 visible lines tak clamp karte hain; data delete nahi hota. */
+/* Visually clamp long messages to three lines without deleting their underlying text. */
 .scanned-message { display: -webkit-box; margin: 12px 0; overflow: hidden; color: var(--text); font-size: 0.88rem; line-height: 1.5; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .reason-row { display: flex; align-items: flex-start; gap: 9px; color: var(--muted); }
 .reason-row > span { display: grid; flex: 0 0 21px; height: 21px; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--status-color) 14%, transparent); color: var(--status-color); font-weight: 800; }
 .reason-row p { margin: 1px 0 0; font-size: 0.76rem; line-height: 1.45; }
-/* Confidence track ki styling; andar span ki width HTML/JS percentage set karta hai. */
+/* Style the confidence track; HTML or JavaScript sets the inner span's percentage width. */
 .confidence { height: 3px; margin-top: 13px; overflow: hidden; border-radius: 3px; background: var(--line); }
 .confidence span { display: block; height: 100%; background: var(--status-color); }
 .result-card small { display: block; margin-top: 6px; color: var(--muted); font-size: 0.65rem; }
 
-/* History khaali ho to centered icon, heading aur explanatory text. */
+/* Center the placeholder icon, heading, and explanation when history is empty. */
 .empty-state { min-height: 360px; display: grid; place-content: center; justify-items: center; text-align: center; color: var(--muted); }
 .empty-icon { display: grid; width: 56px; height: 56px; margin-bottom: 15px; place-items: center; border: 1px solid var(--line); border-radius: 17px; color: var(--accent); font-size: 1.7rem; }
 .empty-state h3 { margin: 0; color: var(--text); font: 700 1rem "Manrope", sans-serif; }
 .empty-state p { max-width: 245px; margin: 8px 0 0; font-size: 0.8rem; line-height: 1.55; }
 
-/* Neeche feature-summary ke 3 columns aur disclaimer ka typography/layout. */
+/* Style the three feature-summary columns and the usage disclaimer. */
 .trust-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 20px; overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: var(--line); }
 .trust-strip div { padding: 18px 20px; background: var(--surface); }
 .trust-strip strong, .trust-strip span { display: block; }
@@ -252,10 +252,10 @@ textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent)
 .trust-strip span { margin-top: 4px; color: var(--muted); font-size: 0.72rem; }
 .disclaimer { max-width: 750px; margin: 20px auto 0; color: var(--muted); font-size: 0.72rem; line-height: 1.6; text-align: center; }
 
-/* Loading icon rotation aur new card reveal animation. */
+/* Animate the loading icon rotation and new-card appearance. */
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes reveal { from { opacity: 0; transform: translateY(7px); } }
-/* Status dot blink aur uske around ring expansion ki timing. */
+/* Define the status dot's blink and expanding ring timings. */
 @keyframes status-online {
     0%, 42%, 100% { opacity: 1; transform: scale(1); }
     50%, 62% { opacity: 0.25; transform: scale(0.72); }
@@ -264,7 +264,7 @@ textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent)
     0% { opacity: 0.75; transform: scale(0.7); }
     58%, 100% { opacity: 0; transform: scale(1.55); }
 }
-/* Logo ki shadow glow aur outline ring ki repeating animation. */
+/* Define the repeating logo glow and outline-ring animations. */
 @keyframes logo-glow {
     0%, 100% {
         box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 16%, transparent), 0 0 8px color-mix(in srgb, var(--accent) 20%, transparent);
@@ -279,7 +279,7 @@ textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent)
     75%, 100% { opacity: 0; transform: scale(1.18); }
 }
 
-/* Tablet/smaller screens par two-column workspace ko single column karo. */
+/* Stack the workspace in one column on tablets and smaller screens. */
 @media (max-width: 900px) {
     .shell { padding-top: 34px; }
     .workspace { grid-template-columns: 1fr; }
@@ -287,7 +287,7 @@ textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent)
     .empty-state { min-height: 260px; }
 }
 
-/* Mobile par margins/padding compact, input font 16px aur trust strip single column. */
+/* Use compact mobile spacing, a 16px input font, and a single-column feature summary. */
 @media (max-width: 620px) {
     .site-header, .shell { width: min(1180px, calc(100% - 24px)); }
     .site-header { padding: 16px 0; }
@@ -318,14 +318,14 @@ textarea::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent)
     .trust-strip { grid-template-columns: 1fr; }
 }
 
-/* Bahut narrow screens par subtitle hide aur input hints vertical stack karo. */
+/* Hide the subtitle and stack input hints on very narrow screens. */
 @media (max-width: 380px) {
     .brand small { display: none; }
     .input-meta { align-items: flex-end; flex-direction: column; }
     .input-meta span:first-child { align-self: flex-start; }
 }
 
-/* User ne reduced motion chuna ho to animations/transitions ko lagbhag band karo. */
+/* Nearly disable animations and transitions when the user prefers reduced motion. */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

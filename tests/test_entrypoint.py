@@ -1,15 +1,15 @@
-# Website ke entrypoint ko test karo, bina actual Flask server start kiye.
+# Test the website entrypoint without starting an actual Flask server.
 from unittest.mock import patch
 
 from app import app, main
 
 
-# app.run ko mock karo; main() configured debug, host aur port hi pass kare.
+# Mock app.run and check that main() forwards the configured host, port, and debug setting.
 def test_main_runs_configured_app():
     with patch.object(app, "run") as run:
         main()
 
-    # Arguments aur exactly ek call dono verify hote hain.
+    # Verify both the exact arguments and that the function is called once.
     run.assert_called_once_with(
         debug=app.config["DEBUG"],
         host=app.config["HOST"],

@@ -1,4 +1,4 @@
-# STEP 01: original data ko configured pipeline location par copy/format-convert karo; yahan model train nahi hota.
+# STEP 01: copy or convert the source dataset into the configured pipeline location; no model training happens here.
 """Data-ingestion stage."""
 
 from __future__ import annotations
@@ -11,32 +11,32 @@ import pandas as pd
 from .pipeline_helpers import load_config, pipeline_data_path
 
 
-# Input params.yaml hai; output prepared dataset ka Path hai.
+# Read configuration from params.yaml and return the prepared dataset's Path.
 def ingest_data(config_path: str | Path = "params.yaml") -> Path:
     config = load_config(config_path)
-    # local_path original dataset hai; target raw_data_dir + dataset_name se banta hai.
+    # local_path identifies the source; the target combines raw_data_dir and dataset_name.
     source = Path(config["data_source"]["local_path"])
     target = pipeline_data_path(config)
-    # Source missing ho to aage badhne ke bajay error do.
+    # Stop with an error if the source file does not exist.
     if not source.exists():
         raise FileNotFoundError(f"Source dataset not found: {source}")
 
-    # Output folder pehle se na ho to banao; existing folder se error nahi aata.
+    # Create the output directory if needed, allowing an existing directory.
     target.parent.mkdir(parents=True, exist_ok=True)
     source_suffix = source.suffix.lower()
     target_suffix = target.suffix.lower()
-    # CSV se Parquet ya Parquet se CSV chahiye to pandas conversion karta hai.
+    # Use pandas when conversion between CSV and Parquet is requested.
     if source_suffix == ".csv" and target_suffix == ".parquet":
         pd.read_csv(source).to_parquet(target, index=False)
     elif source_suffix == ".parquet" and target_suffix == ".csv":
         pd.read_parquet(source).to_csv(target, index=False)
     else:
-        # Baaki cases mein file ko metadata ke saath copy karo; label/text validation agle steps mein hoti hai.
+        # Otherwise copy the file with its metadata; text and label validation happens in later stages.
         shutil.copy2(source, target)
     return target
 
 
-# Command line se step chalne par output file ki location print karo.
+# Print the prepared dataset location when the stage runs from the command line.
 def main() -> None:
     target = ingest_data()
     print(f"Stage 01 complete: dataset written to '{target}'")
