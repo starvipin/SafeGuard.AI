@@ -37,7 +37,9 @@ SafeGuard.AI/
 │   │   ├── README.md                ← Inputs, outputs aur commands
 │   │   ├── step_01_prepare_data.py  ← Dataset pipeline mein lao
 │   │   ├── step_02_train_model.py   ← Model train aur local save karo
+│   │   ├── step_02_train_model.ipynb ← Wahi training cell-by-cell samjho/chalao
 │   │   ├── step_03_evaluate_model.py ← Saved model ke metrics nikalo
+│   │   ├── step_03_evaluate_model.ipynb ← Evaluation aur predictions cell-by-cell dekho
 │   │   ├── step_04_upload_to_hf.py  ← Model explicitly HF par bhejo
 │   │   ├── pipeline_helpers.py     ← Shared config/data/metrics helpers
 │   │   └── __init__.py             ← Training package marker
@@ -85,6 +87,8 @@ uv run python app.py
 Browser mein `http://localhost:5000` kholo. First real analysis par local model missing ho to `sainivipin/fraud-model-final` se download hota hai. Startup aur `/health` model load nahi karte.
 
 ## Training ka sequence
+
+Cell-by-cell chalana ho to Step 02 aur Step 03 ke `.ipynb` notebooks available hain. Project root se `uv run python -m jupyter lab` chalao; [notebook guide](src/model_training/README.md#cell-by-cell-notebooks) mein kernel selection aur run order diya hai. `.py` scripts aur notebooks alternative tareeqe hain.
 
 CSV rakho: `data/raw_data/fraud_dataset.csv`. Columns: `text`, `label` (`0` = legit, `1` = fraud). Settings `params.yaml` mein hain.
 

@@ -13,6 +13,25 @@ Actual paths `params.yaml` se aate hain. `pipeline_helpers.py` config reading, d
 
 ## Run order
 
+### Cell-by-cell notebooks
+
+- [step_02_train_model.ipynb](step_02_train_model.ipynb): settings → dataset preview → split → tokenization → batches → base model/optimizer → training → metrics → final save.
+- [step_03_evaluate_model.ipynb](step_03_evaluate_model.ipynb): saved model → test batches → predictions → metrics → galat predictions inspect → metrics save.
+
+Project root se notebook interface kholo:
+
+```bash
+uv run python -m jupyter lab
+```
+
+`src/model_training/` mein notebook kholo, project ki `.venv` wala Python kernel select karo aur cells upar se neeche **Shift+Enter** se chalao. Pehla code cell Python executable print karta hai; woh project environment ka hona chahiye. VS Code mein bhi `.ipynb` kholkar isi environment ko **Select Kernel** se choose kar sakte ho.
+
+Step 01 ka prepared dataset pehle chahiye. Learning rate badalne par fresh training ke liye **Restart Kernel**, phir cells dobara order mein chalao. Sirf training-loop cell repeat karoge to current weights par aur training hogi. Final save cell tak model final output folder mein save nahi hota; training cell intermediate checkpoints bana sakti hai. Saved model ke baad Step 03 kholo; GPU memory free karne ke liye Step 02 ka kernel shut down kar sakte ho.
+
+Notebooks existing `.py` steps ke **alternatives** hain; ek hi training ke liye notebook aur script dono chalana zaroori nahi. DVC/CI/live website existing scripts use karte hain. HF upload ab bhi Step 04 se alag hota hai. Notebook outputs mein dataset text aa sakta hai; share/commit karne se pehle outputs clear karo. Repository mein notebooks bina saved outputs ke rakhi hain.
+
+### Terminal commands
+
 ```bash
 uv run python -m src.model_training.step_01_prepare_data
 uv run python -m src.model_training.step_02_train_model
